@@ -37,6 +37,10 @@ const userSchema=new Schema({
         type:String,
         enum: ['user', 'admin'], // Define roles
         default: 'user'
+    },
+    bookingHistory:{
+        type:mongoose.Schema.Types.ObjectId,
+        ref:"Booking"
     }
     
 },{ timestamps: true })
