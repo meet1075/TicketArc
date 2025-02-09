@@ -17,11 +17,11 @@ const movieSchema = new Schema(
       required: true,
       min: 0,
     },
-    genre: {
-      type: [String],
+    genre: [{
+      type: String,
       required: true,
       index: true, 
-    },
+    }],
     releaseDate: {
       type: Date,
       required: true,
