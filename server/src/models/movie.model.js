@@ -38,11 +38,17 @@ const movieSchema = new Schema(
       required: true,
       index: true
     },
+    movieImage:{
+      type : String,//cloudinary
+      required:true
+    },
+    isPublished:{
+      type:Boolean,
+      default:true
+    },
   },
   { timestamps: true }
 );
-
-
 movieSchema.index({ genre: 1, releaseDate: -1 });
 movieSchema.plugin(mongooseAggregatePaginate)
 

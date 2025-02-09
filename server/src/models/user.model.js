@@ -38,10 +38,10 @@ const userSchema=new Schema({
         enum: ['user', 'admin'], // Define roles
         default: 'user'
     },
-    bookingHistory:{
+    bookingHistory:[{
         type:mongoose.Schema.Types.ObjectId,
         ref:"Booking"
-    }
+    }]
     
 },{ timestamps: true })
 //hashes the pass
