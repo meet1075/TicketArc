@@ -15,7 +15,8 @@ app.use(express.static("public"))
 app.use(cookieParser())
 
 import userRouter from './routes/user.routes.js'
-
+import movieRouter from './routes/movie.routes.js'
 app.use("/api/v1/user",userRouter)
+app.use("/api/v1/movie",movieRouter)
 
 export { app }
