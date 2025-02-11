@@ -16,7 +16,9 @@ app.use(cookieParser())
 
 import userRouter from './routes/user.routes.js'
 import movieRouter from './routes/movie.routes.js'
+import threaterRouter from './routes/theater.routes.js'
 app.use("/api/v1/user",userRouter)
 app.use("/api/v1/movie",movieRouter)
+app.use("/api/v1/theater",threaterRouter)
 
 export { app }

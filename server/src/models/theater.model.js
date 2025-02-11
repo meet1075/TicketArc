@@ -1,6 +1,7 @@
 import mongoose, { Schema } from "mongoose";
+import mongooseAggregatePaginate from "mongoose-aggregate-paginate-v2";
 
-const threaterSchema = new Schema({
+const theaterSchema = new Schema({
     name: {
         type: String,
         required: true
@@ -20,7 +21,11 @@ const threaterSchema = new Schema({
         index: true
     }
 },{timestamps:true});
+theaterSchema.index({ name: "text", "location.city": "text", "location.state": "text" });
 
-export const Threater = mongoose.model("Threater", threaterSchema);
+theaterSchema.plugin(mongooseAggregatePaginate)
+
+export const Theater = mongoose.model("Theater", theaterSchema);
+
 // const screenCount = await Screen.countDocuments({ theaterId: theaterId });
 //if want count of screen
