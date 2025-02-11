@@ -10,7 +10,9 @@ const Navbar = () => {
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center space-x-2">
             <Film size={32} className="text-red-500" />
+            <a href="/" className="flex items-center space-x-1 hover:text-red-500 transition-colors">
             <span className="text-xl font-bold">TicketArc</span>
+            </a>
           </div>
           
           <div className="flex items-center space-x-8">
