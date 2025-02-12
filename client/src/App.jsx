@@ -8,6 +8,7 @@ import MovieDetails from './Pages/MovieDetails';
 import AboutUs from './Pages/AboutUs';
 import Contact from './Pages/Contact';
 import Footer from './Components/Footer';
+import TheaterSeating from './Components/TheaterSeating';
 
 function App() {
   return (
@@ -21,6 +22,10 @@ function App() {
           <Route path="/movie/:id" element={<MovieDetails />} />
           <Route path="/about" element={<AboutUs />} />
           <Route path="/contact" element={<Contact />} />
+          <Route path="/TheaterSeating" element={<TheaterSeating />} 
+          
+          />
+
         </Routes>
       </div>
       <Footer />

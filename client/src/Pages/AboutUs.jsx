@@ -1,149 +1,119 @@
-import React, { useState } from 'react';
-import { Mail, Phone, Facebook, Twitter, Instagram, Send } from 'lucide-react';
+import React from 'react';
+import { Linkedin, Github, Mail } from 'lucide-react';
 
-function Contact() {
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    subject: '',
-    message: ''
-  });
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    // Add your form submission logic here
-    console.log('Form submitted:', formData);
-    // Reset form
-    setFormData({ name: '', email: '', subject: '', message: '' });
-    alert('Thank you for your message! We will get back to you soon.');
-  };
-
-  const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
-  };
+function AboutUs() {
+  const developers = [
+    {
+      id: "DEV001",
+      name: "Sarah Johnson",
+      role: "Full Stack Developer",
+      email: "sarah.johnson@ticketarc.com",
+      linkedin: "https://linkedin.com/in/sarahjohnson",
+      github: "https://github.com/sarahjohnson",
+      image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80"
+    },
+    {
+      id: "DEV002",
+      name: "Michael Chen",
+      role: "Frontend Developer",
+      email: "michael.chen@ticketarc.com",
+      linkedin: "https://linkedin.com/in/michaelchen",
+      github: "https://github.com/michaelchen",
+      image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80"
+    },
+    {
+      id: "DEV003",
+      name: "Emily Rodriguez",
+      role: "Backend Developer",
+      email: "emily.rodriguez@ticketarc.com",
+      linkedin: "https://linkedin.com/in/emilyrodriguez",
+      github: "https://github.com/emilyrodriguez",
+      image: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80"
+    },
+    {
+      id: "DEV004",
+      name: "David Kim",
+      role: "UI/UX Designer",
+      email: "david.kim@ticketarc.com",
+      linkedin: "https://linkedin.com/in/davidkim",
+      github: "https://github.com/davidkim",
+      image: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80"
+    }
+  ];
 
   return (
     <div className="pt-16">
-      <div className="bg-gray-900 text-white py-20">
+      <div className="bg-gradient-to-r from-red-600 to-red-800 text-white py-20">
         <div className="container mx-auto px-4">
-          <h1 className="text-4xl font-bold text-center mb-4">Get in Touch</h1>
-          <p className="text-gray-400 text-center max-w-2xl mx-auto">
-            We'd love to hear from you! Send us a message and we'll respond as soon as possible.
+          <h1 className="text-4xl font-bold text-center mb-4">Meet Our Team</h1>
+          <p className="text-gray-100 text-center max-w-2xl mx-auto">
+            We're a passionate team of developers and designers dedicated to bringing you the best movie booking experience.
+            Our diverse skills and commitment to excellence ensure that TicketArc remains at the forefront of innovation.
           </p>
         </div>
       </div>
 
       <div className="container mx-auto px-4 py-16">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
-          <div className="lg:col-span-2">
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div>
-                <label htmlFor="name" className="block text-sm font-medium text-gray-700">Name</label>
-                <input
-                  type="text"
-                  id="name"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleChange}
-                  required
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500"
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+          {developers.map((dev) => (
+            <div key={dev.id} className="bg-white rounded-xl shadow-lg overflow-hidden transform hover:scale-105 transition-all duration-300">
+              <div className="relative">
+                <img 
+                  src={dev.image} 
+                  alt={dev.name} 
+                  className="w-full h-64 object-cover"
                 />
-              </div>
-
-              <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email</label>
-                <input
-                  type="email"
-                  id="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  required
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="subject" className="block text-sm font-medium text-gray-700">Subject (Optional)</label>
-                <input
-                  type="text"
-                  id="subject"
-                  name="subject"
-                  value={formData.subject}
-                  onChange={handleChange}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="message" className="block text-sm font-medium text-gray-700">Message</label>
-                <textarea
-                  id="message"
-                  name="message"
-                  rows="4"
-                  value={formData.message}
-                  onChange={handleChange}
-                  required
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500"
-                ></textarea>
-              </div>
-
-              <button
-                type="submit"
-                className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors"
-              >
-                <Send className="w-5 h-5 mr-2" />
-                Send Message
-              </button>
-            </form>
-          </div>
-
-          <div className="space-y-8">
-            <div>
-              <h3 className="text-lg font-semibold mb-4">Customer Support</h3>
-              <div className="space-y-4">
-                <div className="flex items-center space-x-3">
-                  <Mail className="w-5 h-5 text-red-500" />
-                  <span>support@ticketarc.com</span>
+                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4">
+                  <h3 className="text-xl font-semibold text-white">{dev.name}</h3>
+                  <p className="text-gray-200">{dev.role}</p>
                 </div>
-                <div className="flex items-center space-x-3">
-                  <Phone className="w-5 h-5 text-red-500" />
-                  <span>+1 (555) 123-4567</span>
+              </div>
+              
+              <div className="p-6">
+                <p className="text-gray-600 mb-2">ID: {dev.id}</p>
+                <div className="flex items-center space-x-2 text-gray-600 mb-2">
+                  <Mail className="w-4 h-4" />
+                  <a href={`mailto:${dev.email}`} className="hover:text-red-600 transition-colors">
+                    {dev.email}
+                  </a>
+                </div>
+                
+                <div className="flex justify-center space-x-4 mt-4">
+                  <a 
+                    href={dev.linkedin} 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="text-blue-600 hover:text-blue-700 transition-colors p-2 rounded-full hover:bg-blue-50"
+                  >
+                    <Linkedin className="w-6 h-6" />
+                  </a>
+                  <a 
+                    href={dev.github} 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="text-gray-700 hover:text-gray-900 transition-colors p-2 rounded-full hover:bg-gray-50"
+                  >
+                    <Github className="w-6 h-6" />
+                  </a>
                 </div>
               </div>
             </div>
+          ))}
+        </div>
 
-            <div>
-              <h3 className="text-lg font-semibold mb-4">Follow Us</h3>
-              <div className="flex space-x-4">
-                <a href="#" className="text-gray-600 hover:text-red-500 transition-colors">
-                  <Facebook className="w-6 h-6" />
-                </a>
-                <a href="#" className="text-gray-600 hover:text-red-500 transition-colors">
-                  <Twitter className="w-6 h-6" />
-                </a>
-                <a href="#" className="text-gray-600 hover:text-red-500 transition-colors">
-                  <Instagram className="w-6 h-6" />
-                </a>
-              </div>
-            </div>
-
-            <div>
-              <h3 className="text-lg font-semibold mb-4">Office Hours</h3>
-              <div className="space-y-2">
-                <p>Monday - Friday: 9:00 AM - 6:00 PM</p>
-                <p>Saturday: 10:00 AM - 4:00 PM</p>
-                <p>Sunday: Closed</p>
-              </div>
-            </div>
-          </div>
+        <div className="mt-16 bg-gray-50 rounded-xl p-8">
+          <h2 className="text-3xl font-bold text-center mb-6">Our Mission</h2>
+          <p className="text-gray-600 text-center max-w-3xl mx-auto">
+            At TicketArc, we're committed to revolutionizing the movie ticket booking experience. 
+            Our platform combines cutting-edge technology with user-friendly design to make booking 
+            your next movie adventure as seamless as possible. We believe in creating moments of joy, 
+            one ticket at a time.
+          </p>
         </div>
       </div>
     </div>
   );
+  
 }
 
-export default Contact;
+export default AboutUs;
