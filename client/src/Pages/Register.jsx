@@ -1,34 +1,49 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Film } from 'lucide-react';
+import axios from "axios";
+import logo from "../assets/image/logo.png"
 
 function Register() {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
-    name: '',
+    fullName: '',
+    userName: '',
     email: '',
     password: '',
-    confirmPassword: ''
+    
   });
   const [error, setError] = useState('');
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match');
-      return;
-    }
-    // Add your registration logic here
-    // For now, let's just simulate a successful registration
-    navigate('/login');
-  };
+    const newUser = {
+        fullName: formData.fullName,
+        userName: formData.userName,
+        email: formData.email,
+        password: formData.password
+    };
+
+    try {
+      console.log(import.meta.env.VITE_BACKEND_URL);
+
+      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/user/register`, newUser);
+        if (response.status === 200) {
+            navigate('/login'); // Redirect on success
+        }
+    } catch (err) {
+    console.error("Registration Error:", err.response ? err.response.data : err.message);
+    setError(err.response?.data?.message || "Error in registration, please try again.");
+}
+};
+
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         <div>
           <div className="flex justify-center">
-            <Film className="w-12 h-12 text-red-500" />
+          <img src = {logo} className='mt-7 h-[100px] w-15'></img>
           </div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
             Create your account
@@ -52,14 +67,28 @@ function Register() {
             <div>
               <label htmlFor="name" className="sr-only">Full name</label>
               <input
-                id="name"
+                id="fullName"
                 name="name"
                 type="text"
                 required
                 className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-red-500 focus:border-red-500 focus:z-10 sm:text-sm"
                 placeholder="Full name"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                value={formData.fullName}
+              
+                onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+              />
+            </div>
+            <div>
+              <label htmlFor="user name" className="sr-only">user name</label>
+              <input
+                id="userName"
+                name="userName"
+                type="text"
+                required
+                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-red-500 focus:border-red-500 focus:z-10 sm:text-sm"
+                placeholder="User Name"
+                value={formData.userName}
+                onChange={(e) => setFormData({ ...formData, userName: e.target.value })}
               />
             </div>
             <div>
@@ -88,19 +117,7 @@ function Register() {
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
               />
             </div>
-            <div>
-              <label htmlFor="confirm-password" className="sr-only">Confirm password</label>
-              <input
-                id="confirm-password"
-                name="confirm-password"
-                type="password"
-                required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-red-500 focus:border-red-500 focus:z-10 sm:text-sm"
-                placeholder="Confirm password"
-                value={formData.confirmPassword}
-                onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-              />
-            </div>
+            
           </div>
 
           <div>

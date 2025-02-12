@@ -1,6 +1,8 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Film, Facebook, Twitter, Instagram, Mail, Phone } from 'lucide-react';
+import logo from "../assets/image/logo.png"
+
 
 const Footer = () => {
   return (
@@ -9,7 +11,7 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div>
             <div className="flex items-center space-x-2 mb-4">
-              <Film className="w-8 h-8 text-red-500" />
+            <img src = {logo} className='mt-7 mb-7 mr-1 h-7 w-15'></img>
               <span className="text-xl font-bold">TicketArc</span>
             </div>
             <p className="text-gray-400">Your ultimate destination for movie tickets booking.</p>

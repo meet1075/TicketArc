@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Film } from 'lucide-react';
+import axios from "axios";
+import logo from "../assets/image/logo.png"
 
 function Login() {
   const navigate = useNavigate();
@@ -10,23 +12,38 @@ function Login() {
   });
   const [error, setError] = useState('');
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+const login={
+  email:formData.email,
+  password: formData.password
+};
+
+
     // Add your login logic here
     // For now, let's just simulate a successful login
-    if (formData.email && formData.password) {
-      navigate('/');
-    } else {
-      setError('Please fill in all fields');
-    }
+    try {
+      console.log(import.meta.env.VITE_BACKEND_URL);
+
+      const response= await axios.post(`${import.meta.env.VITE_BACKEND_URL}/user/login`,login)
+      if (response.status===200) {
+        navigate('/');
+      } else {
+        setError('Please fill in all fields');
+      }
+    } catch (error) {
+      console.error("Login Error:", error.response ? error.response.data : error.message);
+      setError(error.response?.data?.message || "Error in login, please try again.");
+   }
+   
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         <div>
-          <div className="flex justify-center">
-            <Film className="w-12 h-12 text-red-500" />
+          <div className="flex justify-center pt-7">
+          <img src = {logo} className='mt-7 h-[100px] w-15'></img>
           </div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
             Sign in to your account

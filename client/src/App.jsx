@@ -1,13 +1,13 @@
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
-import Navbar from './assets/Components/Navbar';
-import Home from './assets/Pages/Home';
-import Login from './assets/Pages/Login';
-import Register from './assets/Pages/Register';
-import MovieDetails from './assets/Pages/MovieDetails';
-import AboutUs from './assets/Pages/AboutUs';
-import Contact from './assets/Pages/Contact';
-import Footer from './assets/Components/Footer';
+import Navbar from './Components/Navbar';
+import Home from './Pages/Home';
+import Login from './Pages/Login';
+import Register from './Pages/Register';
+import MovieDetails from './Pages/MovieDetails';
+import AboutUs from './Pages/AboutUs';
+import Contact from './Pages/Contact';
+import Footer from './Components/Footer';
 
 function App() {
   return (

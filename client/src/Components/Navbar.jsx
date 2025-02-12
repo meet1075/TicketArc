@@ -1,6 +1,6 @@
 import React from 'react';
 import { Film, User, Ticket, LogIn } from 'lucide-react';
-
+import logo from "../assets/image/logo.png"
 const Navbar = () => {
   const isLoggedIn = false; // This will be managed by auth state later
 
@@ -9,8 +9,8 @@ const Navbar = () => {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center space-x-2">
-            <Film size={32} className="text-red-500" />
             <a href="/" className="flex items-center space-x-1 hover:text-red-500 transition-colors">
+            <img src = {logo} className='mt-9 mb-7 mr-2 h-7 w-15'></img>
             <span className="text-xl font-bold">TicketArc</span>
             </a>
           </div>
