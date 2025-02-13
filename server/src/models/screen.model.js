@@ -5,9 +5,9 @@ const screenSchema = new Schema({
         type: Number,
         required: true
     },
-    threaterId: {
+    theaterId: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "Threater",
+        ref: "Theater",
         required: true
     },
     screenType: {

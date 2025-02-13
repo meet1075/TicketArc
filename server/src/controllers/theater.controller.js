@@ -237,7 +237,7 @@ const removeScreenFromTheater = asyncHandler(async (req, res) => {
         throw new ApiErrors(404, "Screen not found");
     }
     // Check if the screen belongs to the given theater
-    if (screen.threaterId.toString() !== theaterId) {
+    if (screen.theaterId.toString() !== theaterId) {
         throw new ApiErrors(400, "Screen does not belong to the specified theater");
     }
 
@@ -285,6 +285,9 @@ const getTheatersWithScreenDetails=asyncHandler(async(req,res)=>{
             }
         }
     ])
+    return res
+    .status(200)
+    .json(new ApiResponse(200,theaterWithScreenDetails,"All Screens of Theater fetched Successfully"))
 })
 export{
     addTheater ,
