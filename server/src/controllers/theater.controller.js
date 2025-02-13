@@ -2,6 +2,7 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiErrors } from "../utils/ApiErrors.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import {Theater} from "../models/theater.model.js"
+import { Screen } from "../models/screen.model.js";
 import mongoose, { isValidObjectId } from 'mongoose';
 
 const addTheater = asyncHandler(async (req, res) => {
@@ -191,6 +192,100 @@ const searchTheaters = asyncHandler(async (req, res) => {
         .status(200)
         .json(new ApiResponse(200, theaters, "Theaters fetched successfully"));
 });
+ const addScreenToTheater= asyncHandler(async(req,res)=>{
+    const{theaterId}=req.params
+    const {screenNumber,screenType, totalSeats} = req.body
+    if(!isValidObjectId(theaterId)){
+        throw new ApiErrors(404,"Invalid Theater id")
+    }
+    const theater= await Theater.findById(theaterId)
+    if(!theater){
+        throw new ApiErrors(404,"no theater found")
+    }
+    if (!screenNumber || !screenType || !totalSeats) {
+        throw new ApiErrors(400, "All fields are required");
+    }
+    if (req.user.role !== "admin" || theater.adminId.toString() !== req.user._id.toString()) {
+        throw new ApiErrors(403, "You are not authorized to add screen to  this theater");
+    }
+    const screen=await Screen.create({
+        screenNumber,
+        screenType,
+        totalSeats,
+        theaterId
+    })
+    theater.screens.push(screen._id);
+    await theater.save();
+    return res
+    .status(200)
+    .json(new ApiResponse(200, screen,"screen added successfully "))
+ })
+const removeScreenFromTheater = asyncHandler(async (req, res) => {
+    const { theaterId, screenId } = req.params;
+
+    if (!isValidObjectId(theaterId) || !isValidObjectId(screenId)) {
+        throw new ApiErrors(400, "Invalid Theater ID or Screen ID");
+    }
+
+    const theater = await Theater.findById(theaterId);
+    if (!theater) {
+        throw new ApiErrors(404, "Theater not found");
+    }
+
+    const screen = await Screen.findById(screenId);
+    if (!screen) {
+        throw new ApiErrors(404, "Screen not found");
+    }
+    // Check if the screen belongs to the given theater
+    if (screen.threaterId.toString() !== theaterId) {
+        throw new ApiErrors(400, "Screen does not belong to the specified theater");
+    }
+
+    if (req.user.role !== "admin" || theater.adminId.toString() !== req.user._id.toString()) {
+        throw new ApiErrors(403, "You are not authorized to remove a screen from this theater");
+    }
+
+    // Remove the screen from the Theater's screens array
+    theater.screens = theater.screens.filter(id => id.toString() !== screenId);
+    await theater.save(); //check if array is updated
+
+    const deletedScreen=await Screen.findByIdAndDelete(screenId);
+    if (!deletedScreen) {
+        throw new ApiErrors(500, "Failed to delete screen");
+    }
+    return res
+        .status(200)
+        .json(new ApiResponse(200, {}, "Screen removed successfully"));
+});
+const getTheatersWithScreenDetails=asyncHandler(async(req,res)=>{
+    const{theaterId}=req.params
+
+    if(!isValidObjectId(theaterId)){
+        throw new ApiErrors(404,"Invalid Theater id")
+    }
+    const theaterWithScreenDetails= await Theater.aggregate([
+        { 
+             $match:{
+                _id: new mongoose.Types.ObjectId(theaterId)
+            }
+        },
+        {
+            $lookup:{
+                from: "screens", 
+                localField: "screens",
+                foreignField: "_id",
+                as: "screenDetails"
+            }
+
+        },
+        {
+            $project:{
+                screens:0,
+                "screenDetails.seats": 0
+            }
+        }
+    ])
+})
 export{
     addTheater ,
     deleteTheater,
@@ -198,7 +293,7 @@ export{
     getTheaterById,
     getAllTheater,
     searchTheaters,
-    // addScreenToTheater,
-    // removeScreenFromTheater,
-    // getTheatersWithScreenDetails
+    addScreenToTheater,
+    removeScreenFromTheater,
+    getTheatersWithScreenDetails
 }

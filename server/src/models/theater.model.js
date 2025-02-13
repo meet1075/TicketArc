@@ -27,5 +27,3 @@ theaterSchema.plugin(mongooseAggregatePaginate)
 
 export const Theater = mongoose.model("Theater", theaterSchema);
 
-// const screenCount = await Screen.countDocuments({ theaterId: theaterId });
-//if want count of screen
