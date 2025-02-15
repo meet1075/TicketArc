@@ -281,7 +281,6 @@ const getTheatersWithScreenDetails=asyncHandler(async(req,res)=>{
         {
             $project:{
                 screens:0,
-                "screenDetails.seats": 0
             }
         }
     ])

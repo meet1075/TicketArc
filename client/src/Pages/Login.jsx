@@ -33,7 +33,7 @@ const login={
       }
     } catch (error) {
       console.error("Login Error:", error.response ? error.response.data : error.message);
-      setError(error.response?.data?.message || "Error in login, please try again.");
+      setError(error.response?.data?.message || "Incorrect Email / Password, please enter correct details again.");
    }
    
   };

@@ -19,10 +19,10 @@ const screenSchema = new Schema({
         type: Number,
         required: true
     },
-    seats: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Seat"
-    }]
+    // seats: [{
+    //     type: mongoose.Schema.Types.ObjectId,
+    //     ref: "Seat"
+    // }]
 },{timestamps:true});
 
 export const Screen = mongoose.model("Screen", screenSchema);

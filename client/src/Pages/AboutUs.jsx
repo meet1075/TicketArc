@@ -1,43 +1,44 @@
 import React from 'react';
 import { Linkedin, Github, Mail } from 'lucide-react';
+// import {image} from '../assets/image/meet.jpg';
 
 function AboutUs() {
   const developers = [
-    {
-      id: "DEV001",
-      name: "Sarah Johnson",
-      role: "Full Stack Developer",
-      email: "sarah.johnson@ticketarc.com",
-      linkedin: "https://linkedin.com/in/sarahjohnson",
-      github: "https://github.com/sarahjohnson",
-      image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80"
-    },
-    {
-      id: "DEV002",
-      name: "Michael Chen",
-      role: "Frontend Developer",
-      email: "michael.chen@ticketarc.com",
-      linkedin: "https://linkedin.com/in/michaelchen",
-      github: "https://github.com/michaelchen",
-      image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80"
-    },
-    {
-      id: "DEV003",
-      name: "Emily Rodriguez",
+    { 
+      id: "23dce115",
+      name: "Meet Soni",
       role: "Backend Developer",
-      email: "emily.rodriguez@ticketarc.com",
-      linkedin: "https://linkedin.com/in/emilyrodriguez",
-      github: "https://github.com/emilyrodriguez",
-      image: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80"
+      email: "23dce115@charusat.edu.in",
+      linkedin: "",
+      github: "",
+      image: ""
     },
     {
-      id: "DEV004",
-      name: "David Kim",
-      role: "UI/UX Designer",
-      email: "david.kim@ticketarc.com",
-      linkedin: "https://linkedin.com/in/davidkim",
-      github: "https://github.com/davidkim",
-      image: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80"
+      id: "23dce116",
+      name: "Tirth Sorathia",
+      role: "Frontend Developer",
+      email: "23dce116@charusat.edu.in",
+      linkedin: "",
+      github: "",
+      image: ""
+    },
+    {
+      id: "23dce119",
+      name: "Shubham tandel",
+      role: "UI/UX Designer/resercher",
+      email: "23dce119@charusat.edu.in",
+      linkedin: "",
+      github: "",
+      image: ""
+    },
+    {
+      id: "23dce125",
+      name: "Shreyan Varsani",
+      role: "Frontend/Documentation",
+      email: "23dce125@charusat.edu.in",
+      linkedin: "",
+      github: "",
+      image: ""
     }
   ];
 

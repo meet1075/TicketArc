@@ -19,6 +19,11 @@ const seatSchema = new Schema({
         ref: "ShowTime",
         required: true
     },
+    screenId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Screen",
+        required: true
+    },
     reservedBy: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",

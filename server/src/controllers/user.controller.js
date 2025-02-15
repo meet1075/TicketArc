@@ -11,7 +11,7 @@ const generateAccessAndRefreshToken = async(userId) => {
         const accessToken = user.generateAccessToken();
         const refreshToken = user.generateRefreshToken();
 
-        // Update user's refresh token in the database
+        
         user.refreshToken = refreshToken;
         await user.save({ validateBeforeSave: false });
 
@@ -39,11 +39,10 @@ const register = asyncHandler(async (req, res) => {
 
     const existingUsersCount = await User.countDocuments();
     if (existingUsersCount === 0) {
-        // If it's the first user in the database, make them admin
         assignedRole = "admin";
     }
 
-    // If role is "admin", check if the request is from an authenticated admin
+    
     if (role === "admin") {
         if (!req.user || req.user.role !== "admin") {
             throw new ApiErrors(403, "Only admins can create another admin");
@@ -155,10 +154,8 @@ console.log("error",incomingRefreshToken)
             throw new ApiErrors(401, "Refresh token is expired or used");
         }
 
-        // Generate new access and refresh tokens
         const { accessToken, refreshToken: newRefreshToken } = await generateAccessAndRefreshToken(user._id);
 
-        // Update refresh token in the database
         user.refreshToken = newRefreshToken;
         await user.save({ validateBeforeSave: false });
 
@@ -230,34 +227,34 @@ const bookingHistory = asyncHandler(async (req, res) => {
     const userBookings = await Booking.aggregate([
         {
             $match: {
-                userId: new mongoose.Types.ObjectId(req.user._id) // ✅ Match bookings for the logged-in user
+                userId: new mongoose.Types.ObjectId(req.user._id) // Match bookings for the logged-in user
             }
         },
         {
             $lookup: {
-                from: "showtimes", // ✅ Fetch showtime details
+                from: "showtimes", 
                 localField: "showtimeId",
                 foreignField: "_id",
                 as: "showtimeDetails"
             }
         },
         {
-            $unwind: "$showtimeDetails" // ✅ Convert array into object
+            $unwind: "$showtimeDetails"  
         },
         {
             $lookup: {
-                from: "movies", // ✅ Fetch movie details from Showtimes
+                from: "movies", 
                 localField: "showtimeDetails.movieId",
                 foreignField: "_id",
                 as: "movieDetails"
             }
         },
         {
-            $unwind: "$movieDetails" // ✅ Convert array into object
+            $unwind: "$movieDetails" 
         },
         {
             $lookup: {
-                from: "seats", // ✅ Fetch seat details
+                from: "seats",
                 localField: "seats",
                 foreignField: "_id",
                 as: "seatDetails"
