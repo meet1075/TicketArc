@@ -48,3 +48,13 @@ export const verifyUser = (req, res, next) => {
     next(error); // Forward any error to error handler
   }
 };
+export const verifyRoles = (...allowedRoles) => (req, res, next) => {
+  try {
+    if (!allowedRoles.includes(req.user.role)) {
+      throw new ApiErrors(403, `Forbidden: Allowed roles are ${allowedRoles.join(", ")}`);
+    }
+    next();
+  } catch (error) {
+    next(error);
+  }
+};
