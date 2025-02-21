@@ -1,4 +1,5 @@
 import mongoose, { Schema } from "mongoose";
+import mongooseAggregatePaginate from "mongoose-aggregate-paginate-v2";
 
 const screenSchema = new Schema({
     screenNumber: {
@@ -24,5 +25,5 @@ const screenSchema = new Schema({
     //     ref: "Seat"
     // }]
 },{timestamps:true});
-
+screenSchema.plugin(mongooseAggregatePaginate);
 export const Screen = mongoose.model("Screen", screenSchema);

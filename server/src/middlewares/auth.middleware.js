@@ -37,7 +37,7 @@ export const verifyAdmin = (req, res, next) => {
   }
 };
 
-// ✅ User Role Middleware (verifyUser)
+
 export const verifyUser = (req, res, next) => {
   try {
     if (req.user.role !== 'user') {

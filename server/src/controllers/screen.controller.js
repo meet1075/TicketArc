@@ -50,63 +50,91 @@ const getScreenById=asyncHandler(async(req,res)=>{
     .status(200)
     .json(new ApiResponse(200,screen,"Screen fetched successfully"))
 })
-getAllScreen=asyncHandler(async(req,res)=>{
-    const {page=1,limit=10,screenType,sortBy,sortType}=req.query
-    const pipeline=[]
-    if(screenType){
+const getAllScreen = asyncHandler(async (req, res) => {
+    const { page = 1, limit = 10, screenType, sortBy, sortType } = req.query;
+    
+    let pipeline = [];
+
+    if (screenType) {
         pipeline.push({
-            $match:{
-                screenType:screenType
+            $match: {
+                screenType: screenType
             }
-        })
+        });
     }
-    if(sortBy){
+
+    if (sortBy) {
         pipeline.push({
-            $sort:{
-                [sortBy]:sortType==="asc"?1:-1
+            $sort: {
+                [sortBy]: sortType === "asc" ? 1 : -1
             }
-        })
-    }
-    else{
+        });
+    } else {
         pipeline.push({
-            $sort:{
-                createdAt:-1
+            $sort: {
+                createdAt: -1
             }
-        })
+        });
     }
-    const screenAggregate=await Screen.aggregate(pipeline)
-    const options={
-        page:parseInt(page,10),
-        limit:parseInt(limit,10)
+
+    pipeline.push({
+        $project: {
+            _id: 1, 
+            screenNumber: 1,
+            theaterId: 1,
+            screenType: 1,
+            totalSeats: 1,
+            createdAt: 1,
+            updatedAt: 1
+        }
+    });
+
+    const options = {
+        page: parseInt(page, 10),
+        limit: parseInt(limit, 10)
+    };
+
+    const screens = await Screen.aggregatePaginate(Screen.aggregate(pipeline), options);
+
+    return res.status(200).json(new ApiResponse(200, screens, "Screens fetched successfully"));
+});
+
+const searchScreen = asyncHandler(async (req, res) => {
+    const { page = 1, limit = 10, screenType } = req.query;
+
+    if (!screenType) {
+        throw new ApiErrors(400, "screenType is required");
     }
-    const screens=await Screen.aggregatePaginate(screenAggregate,options)
-    return res
-    .status(200)
-    .json(new ApiResponse(200,screens,"Screens fetched successfully"))
-})
-const searchScreen=asyncHandler(async(req,res)=>{
-    const {page=1,limit=10,screenType}=req.query
-    if(!screenType){
-        throw new ApiErrors(400,"screenType is required")
-    }
-    const pipeline=[]
-    if(screenType){
-        pipeline.push({
-            $match:{
-                screenType:screenType
+
+    const pipeline = [
+        {
+            $match: {
+                screenType: screenType
             }
-        })
-    }
-    const screenAggregate=await Screen.aggregate(pipeline)  
-    const options={
-        page:parseInt(page,10),
-        limit:parseInt(limit,10)
-    }
-    const screens=await Screen.aggregatePaginate(screenAggregate,options)
-    return res
-    .status(200)
-    .json(new ApiResponse(200,screens,"Screens fetched successfully"))
-})
+        },
+        {
+            $project: {
+                _id: 1,
+                screenNumber: 1,
+                theaterId: 1,
+                screenType: 1,
+                totalSeats: 1,
+                createdAt: 1,
+                updatedAt: 1
+            }
+        }
+    ];
+
+    const options = {
+        page: parseInt(page, 10),
+        limit: parseInt(limit, 10)
+    };
+
+    const screens = await Screen.aggregatePaginate(Screen.aggregate(pipeline), options);
+
+    return res.status(200).json(new ApiResponse(200, screens, "Screens fetched successfully"));
+});
+
 export{
     updateScreen,
     getScreenById,
