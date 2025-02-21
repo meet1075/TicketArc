@@ -18,9 +18,11 @@ import userRouter from './routes/user.routes.js'
 import movieRouter from './routes/movie.routes.js'
 import threaterRouter from './routes/theater.routes.js'
 import screenRouter from './routes/screen.routes.js'
+import showtimeRouter from './routes/showtime.routes.js'
 app.use("/api/v1/user",userRouter)
 app.use("/api/v1/movie",movieRouter)
 app.use("/api/v1/theater",threaterRouter)
 app.use("/api/v1/screen",screenRouter)
+app.use("/api/v1/showtime",showtimeRouter)
 
 export { app }
