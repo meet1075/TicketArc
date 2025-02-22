@@ -13,10 +13,10 @@ const addShowtime = asyncHandler(async (req, res) => {
       throw new ApiErrors(400, "Invalid movieId or screenId");
     }
   
-    const { showDateTime, status } = req.body;
+    const { showDateTime, status,price } = req.body;
   
-    if (!showDateTime || !status) {
-      throw new ApiErrors(400, "showDateTime and status are required");
+    if (!showDateTime || !status || !price) {
+      throw new ApiErrors(400, "showDateTime and status and price are required");
     }
   
     const allowedStatuses = ["Scheduled", "Cancelled", "Completed"];
@@ -53,6 +53,7 @@ const addShowtime = asyncHandler(async (req, res) => {
       movieId,
       screenId,
       showDateTime,
+      price,
       status: finalStatus,
       bookingLimit: screen.seats,
     });

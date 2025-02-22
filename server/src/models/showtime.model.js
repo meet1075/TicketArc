@@ -11,8 +11,14 @@ const showTimeSchema = new Schema({
         required: true
     },
     price: {
-        type: Number,
-        required: true
+        Regular: {
+            type: Number,
+            required: true
+        },
+        Premium: {
+            type: Number,
+            required: true
+        }   
     },
     status: {
         type: String,
