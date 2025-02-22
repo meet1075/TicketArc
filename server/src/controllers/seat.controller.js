@@ -1,0 +1,289 @@
+import { asyncHandler } from "../utils/asyncHandler.js";
+import { ApiErrors } from "../utils/ApiErrors.js";
+import { ApiResponse } from "../utils/ApiResponse.js";
+import { Seat } from "../models/seat.model.js";
+import { Screen } from "../models/screen.model.js";
+import { Theater } from "../models/theater.model.js";
+import mongoose, { isValidObjectId } from 'mongoose';
+import { ShowTime } from "../models/showtime.model.js";
+
+
+const addSeatsForScreen = asyncHandler(async (req, res) => {
+    const { screenId } = req.params;
+    let { totalRows, seatsPerRow, rowNames, seatTypes } = req.body;
+  
+    if (!isValidObjectId(screenId)) {
+      throw new ApiErrors(400, "Invalid screenId");
+    }
+  
+    totalRows = totalRows || 10;
+    seatsPerRow = seatsPerRow || 10;
+  
+    if (!rowNames || !Array.isArray(rowNames) || rowNames.length !== totalRows) {
+      rowNames = Array.from({ length: totalRows }, (_, i) => String.fromCharCode(65 + i));
+    }
+  
+    if (!seatTypes || !Array.isArray(seatTypes) || seatTypes.length !== totalRows) {
+      throw new ApiErrors(400, "seatTypes must be an array of length equal to totalRows");
+    }
+  
+    let seats = [];
+    for (let row = 0; row < totalRows; row++) {
+      for (let col = 1; col <= seatsPerRow; col++) {
+        const seatNumber = `${rowNames[row]}${col}`;
+  
+        seats.push({
+          seatNumber,
+          seatType: seatTypes[row], // Assign seat type from the provided array
+          screenId,
+          isAvailable: true,
+          reservedBy: null,
+        });
+      }
+    }
+  
+    try {
+      await Seat.insertMany(seats);
+      console.log(`✅ ${totalRows * seatsPerRow} seats created for Screen ${screenId}`);
+  
+      return res.status(201).json({
+        message: `${totalRows * seatsPerRow} seats created for Screen ${screenId}`,
+        seatsCreated: seats.length,
+      });
+    } catch (error) {
+      console.error("Error inserting seats:", error);
+      res.status(500).json({ error: "Failed to create seats" });
+    }
+  });
+  
+const deleteSeatsForScreen = asyncHandler(async (req, res) => {
+    const { screenId } = req.params;
+  
+    if (!isValidObjectId(screenId)) {
+      throw new ApiErrors(400, "Invalid screenId");
+    }
+  
+    const deletedSeats = await Seat.deleteMany({ screenId });
+  
+    if (deletedSeats.deletedCount === 0) {
+      throw new ApiErrors(404, "No seats found for this screen");
+    }
+  
+    return res.status(200).json({
+      message: `All ${deletedSeats.deletedCount} seats deleted for Screen ${screenId}`,
+    });
+});
+  
+const updateSeat = asyncHandler(async (req, res) => {
+    const { seatId } = req.params;
+    const { seatType,seatNumber } = req.body;  
+    if (!isValidObjectId(seatId)) {
+      throw new ApiErrors(400, "Invalid seat Id");
+    }
+    const seat = await Seat.findById(seatId);
+    if (!seat) {
+      throw new ApiErrors(404, "Seat not found");   
+    }
+    const updatedSeat=await Seat.findByIdAndUpdate(
+        seatId,
+      {
+        $set: {
+          seatType: seatType??seat.seatType,
+          seatNumber: seatNumber??seat.seatNumber,
+        },
+      },
+      { new: true }
+    );  
+    return res
+    .status(200)
+    .json(new ApiResponse(200, updatedSeat, "Seat updated successfully"));
+})
+
+const getSeatById = asyncHandler(async (req, res) => {
+    const { seatId } = req.params;
+    if (!isValidObjectId(seatId)) {
+        throw new ApiErrors(400, "Invalid seat Id");
+    }
+    const seat = await Seat.findById(seatId);
+    if (!seat) {
+        throw new ApiErrors(404, "Seat not found");
+    }
+    return res
+    .status(200)
+    .json(new ApiResponse(200, seat, "Seat found successfully"));
+})
+
+const getSeatsByScreenId = asyncHandler(async (req, res) => {
+    const { screenId } = req.params;
+    if (!isValidObjectId(screenId)) {
+        throw new ApiErrors(400, "Invalid screen Id");
+    }
+    const seats = await Seat.find({ screenId }); // Use find({ screenId }) instead of findById
+    if (!seats || seats.length === 0) {
+        throw new ApiErrors(404, "No seats found for this screen");
+    }
+    return res.status(200).json(new ApiResponse(200, seats, "Seats found successfully"));
+});
+
+
+const checkSeatAvailability = asyncHandler(async (req, res) => {
+    const { seatId, showtimeId } = req.params;
+
+    if (!isValidObjectId(seatId) || !isValidObjectId(showtimeId)) {
+        throw new ApiErrors(400, "Invalid seatId or showtimeId");
+    }
+
+    const seat = await Seat.findOne({ _id: seatId, showtimeId });
+
+    if (!seat) {
+        throw new ApiErrors(404, "Seat not found for this showtime");
+    }
+
+    return res.status(200).json(new ApiResponse(200, { isAvailable: seat.isAvailable }, "Seat availability checked successfully"));
+});
+
+const reserveSeat = asyncHandler(async (req, res) => {
+    const { seatId, showtimeId } = req.params;
+    const userId = req.user?._id; 
+
+    if (!isValidObjectId(seatId) || !isValidObjectId(showtimeId)) {
+        throw new ApiErrors(400, "Invalid seatId or showtimeId");
+    }
+
+    if (!userId) {
+        throw new ApiErrors(401, "User not authenticated");
+    }
+
+    const seat = await Seat.findOne({ _id: seatId, showtimeId });
+
+    if (!seat) {
+        throw new ApiErrors(404, "Seat not found for this showtime");
+    }
+
+    if (!seat.isAvailable) {
+        throw new ApiErrors(400, "Seat is already booked");
+    }
+
+    if (seat.reservedBy) {
+        throw new ApiErrors(400, "Seat is already reserved");
+    }
+
+    // Reserve the seat
+    seat.reservedBy = userId;
+    seat.isAvailable = false;
+    await seat.save();
+
+    setTimeout(async () => {
+        const reservedSeat = await Seat.findById(seatId);
+        if (reservedSeat && reservedSeat.reservedBy && reservedSeat.isAvailable === false) {
+            reservedSeat.reservedBy = null;
+            reservedSeat.isAvailable = true;
+            await reservedSeat.save();
+            console.log(`🔓 Seat ${seatId} automatically released after 5 minutes`);
+        }
+    }, 5 * 60 * 1000);
+    
+
+    return res.status(200).json(new ApiResponse(200, seat, "Seat reserved successfully for 5 minutes"));
+});
+
+const releaseSeat = asyncHandler(async (req, res) => {
+    const { seatId, showtimeId } = req.params;
+    const userId = req.user?._id; 
+
+    if (!isValidObjectId(seatId) || !isValidObjectId(showtimeId)) {
+        throw new ApiErrors(400, "Invalid seatId or showtimeId");
+    }
+
+    if (!userId) {
+        throw new ApiErrors(401, "User not authenticated");
+    }
+
+    const seat = await Seat.findOne({ _id: seatId, showtimeId });
+
+    if (!seat) {
+        throw new ApiErrors(404, "Seat not found for this showtime");
+    }
+
+    if (!seat.reservedBy || seat.reservedBy.toString() !== userId.toString()) {
+        throw new ApiErrors(400, "Seat is not reserved by you or already released");
+    }
+
+    // Release the seat
+    seat.reservedBy = null;
+    seat.isAvailable = true;
+    await seat.save();
+
+    return res.status(200).json(new ApiResponse(200, seat, "Seat released successfully"));
+});
+
+const confirmSeatBooking = asyncHandler(async (req, res) => {
+    const { seatId, showtimeId } = req.params;
+    const userId = req.user?._id; 
+
+    if (!isValidObjectId(seatId) || !isValidObjectId(showtimeId)) {
+        throw new ApiErrors(400, "Invalid seatId or showtimeId");
+    }
+
+    if (!userId) {
+        throw new ApiErrors(401, "User not authenticated");
+    }
+
+    const seat = await Seat.findOne({ _id: seatId, showtimeId });
+
+    if (!seat) {
+        throw new ApiErrors(404, "Seat not found for this showtime");
+    }
+
+    if (!seat.reservedBy || seat.reservedBy.toString() !== userId.toString()) {
+        throw new ApiErrors(400, "Seat is not reserved by you");
+    }
+
+    // Confirm the seat booking
+    seat.isAvailable = false;
+    await seat.save();
+
+    return res.status(200).json(new ApiResponse(200, seat, "Seat booking confirmed successfully"));
+})
+
+const cancelSeatBooking = asyncHandler(async (req, res) => {
+    const { seatId, showtimeId } = req.params;
+    const userId = req.user?._id; 
+
+    if (!isValidObjectId(seatId) || !isValidObjectId(showtimeId)) {
+        throw new ApiErrors(400, "Invalid seatId or showtimeId");
+    }
+
+    if (!userId) {
+        throw new ApiErrors(401, "User not authenticated");
+    }
+
+    const seat = await Seat.findOne({ _id: seatId, showtimeId });
+
+    if (!seat) {
+        throw new ApiErrors(404, "Seat not found for this showtime");
+    }
+
+    if (!seat.reservedBy || seat.reservedBy.toString() !== userId.toString()) {
+        throw new ApiErrors(400, "Seat is not reserved by you");
+    }
+
+    // Cancel the seat booking
+    seat.reservedBy = null;
+    seat.isAvailable = true;
+    await seat.save();
+
+    return res.status(200).json(new ApiResponse(200, seat, "Seat booking cancelled successfully"));
+})
+export {
+    addSeatsForScreen,
+    deleteSeatsForScreen,
+    updateSeat,
+    getSeatById,
+    getSeatsByScreenId,
+    checkSeatAvailability,
+    reserveSeat,
+    releaseSeat,
+    confirmSeatBooking,
+    cancelSeatBooking
+}
