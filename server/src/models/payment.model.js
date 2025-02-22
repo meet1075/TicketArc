@@ -12,7 +12,7 @@ const paymentSchema = new Schema({
     },
     paymentMethod: {
         type: String,
-        enum: ["Credit Card", "Debit Card", "UPI", "Net Banking", "Wallet"],
+        enum: ["Credit Card", "Debit Card", "UPI", "Net Banking"],
         required: true
     },
     paymentStatus: {

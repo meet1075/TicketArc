@@ -1,6 +1,7 @@
 import { Router } from "express";
 import {
     createBooking,
+    getBookingDetails,  
     geAllBookingOfShowTime,
     getBookingByScreen,
     geAllBookingOfTheater,
@@ -15,6 +16,7 @@ import { verifyAdmin,verifyJWT,verifyRoles } from "../middlewares/auth.middlewar
 const router = Router();
 router.use(verifyJWT,upload.none());
 router.route("/createBooking").post(verifyRoles("user"),createBooking);
+router.route("/getBookingDetails/:bookingId").get(verifyRoles("admin,user"),getBookingDetails);
 router.route("/geAllBookingOfShowTime/:showTimeId").get(verifyRoles("admin"),geAllBookingOfShowTime);
 router.route("/getBookingByScreen/:screenId").get(verifyRoles("admin"),getBookingByScreen);
 router.route("/geAllBookingOfTheater/:theaterId").get(verifyRoles("admin"),geAllBookingOfTheater);

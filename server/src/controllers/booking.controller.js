@@ -83,6 +83,33 @@ const createBooking = asyncHandler(async (req, res) => {
       .json(new ApiResponse(201, { booking }, "Booking created successfully"));
 });
 
+const getBookingDetails = asyncHandler(async (req, res) => {
+    const { bookingId } = req.params;
+  
+    if (!isValidObjectId(bookingId)) {
+      throw new ApiErrors(400, "Invalid bookingId");
+    }
+  
+    const booking = await Booking.findById(bookingId)
+      .populate("movieId", "title duration genre") 
+      .populate("theaterId", "name location") 
+      .populate("screenId", "screenNumber seatCapacity")
+      .populate("userId", "name email") 
+      .populate({
+        path: "seats.seatId",
+        select: "seatNumber seatType price"
+      });
+
+    if (!booking) {
+      throw new ApiErrors(404, "No booking found");
+    }
+  
+    return res
+      .status(200)
+      .json(new ApiResponse(200, { booking }, "Booking fetched successfully"));
+});
+
+
 const geAllBookingOfShowTime = asyncHandler(async (req, res) => {
     const { showTimeId } = req.params;
   
@@ -234,6 +261,7 @@ const AllBookingOfUser = asyncHandler(async (req, res) => {
 })
 export{
     createBooking,
+    getBookingDetails,
     geAllBookingOfShowTime,
     getBookingByScreen,
     geAllBookingOfTheater,
