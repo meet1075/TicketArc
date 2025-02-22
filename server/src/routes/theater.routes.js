@@ -1,13 +1,13 @@
 import { Router } from "express";
-import { verifyAdmin,verifyJWT, verifyUser ,verifyRoles} from "../middlewares/auth.middleware.js";
+import { verifyAdmin,verifyJWT,verifyRoles} from "../middlewares/auth.middleware.js";
 import { addTheater,deleteTheater,updateTheater,getAllTheater,getTheaterById, searchTheaters, addScreenToTheater, removeScreenFromTheater, getTheatersWithScreenDetails } from "../controllers/theater.controller.js";
 import { upload } from "../middlewares/multer.middleware.js";
 
 const router=Router()
 router.use(verifyJWT,upload.none())
 
-router.route("/addTheater").post(verifyRoles("admin"), addTheater);
-router.route("/deleteTheater/:theaterId").delete(verifyRoles("admin"), deleteTheater);
+router.route("/addTheater").post(verifyAdmin, addTheater);
+router.route("/deleteTheater/:theaterId").delete(verifyAdmin, deleteTheater);
 router.route("/updateTheater/:theaterId").patch(verifyRoles("admin"), updateTheater);
 router.route("/getTheater/:theaterId").get(verifyRoles("admin", "user"), getTheaterById);
 router.route("/getAllTheater").get(verifyRoles("admin"), getAllTheater);
