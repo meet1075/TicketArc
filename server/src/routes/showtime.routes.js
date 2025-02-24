@@ -13,7 +13,7 @@ import {
 import { upload } from "../middlewares/multer.middleware.js";
 const router = Router();
 router.use(verifyJWT, upload.none());
-router.route("/addShowtime").post(verifyRoles("admin"), addShowtime);   
+router.route("/addShowtime/:movieId/:screenId").post(verifyRoles("admin"), addShowtime);   
 router.route("/deleteShowtime/:showtimeId").delete(verifyRoles("admin"), deleteShowtime);
 router.route("/updateShowtime/:showtimeId").patch(verifyRoles("admin"), updateShowtime);
 router.route("/getShowtime/:showtimeId").get(verifyRoles("admin", "user"), getShowtime);

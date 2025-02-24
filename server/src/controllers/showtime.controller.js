@@ -1,7 +1,7 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
 import{ApiErrors} from "../utils/ApiErrors.js";
 import{ApiResponse} from "../utils/ApiResponse.js";
-import{Showtime} from "../models/showtime.model.js";
+import{ShowTime} from "../models/showtime.model.js";
 import{Movie} from "../models/movie.model.js";
 import{Screen} from "../models/screen.model.js";
 import mongoose, { isValidObjectId } from 'mongoose';
@@ -49,13 +49,13 @@ const addShowtime = asyncHandler(async (req, res) => {
       finalStatus = "Completed";
     }
   
-    const showtime = await Showtime.create({
+    const showtime = await ShowTime.create({
       movieId,
       screenId,
       showDateTime,
       price,
       status: finalStatus,
-      bookingLimit: screen.seats,
+      bookingLimit: screen.totalSeats,
     });
   
     if (!showtime) {
@@ -67,11 +67,11 @@ const addShowtime = asyncHandler(async (req, res) => {
 
 const updateShowtime = asyncHandler(async (req, res) => {
     const { showtimeId } = req.params;
-    const { showDateTime, status } = req.body;
+    const { showDateTime, status ,price} = req.body;
     if (!isValidObjectId(showtimeId)) {
       throw new ApiErrors(400, "Invalid showtime Id");
     }
-    const showtime = await Showtime.findById(showtimeId);
+    const showtime = await ShowTime.findById(showtimeId);
     if (!showtime) {
       throw new ApiErrors(404, "Showtime not found");
     }
@@ -83,12 +83,13 @@ const updateShowtime = asyncHandler(async (req, res) => {
     if (new Date(showDateTime) < now && status !== "Cancelled") {
       finalStatus = "Completed";
     }
-    const updatedShowtime=await Showtime.findByIdAndUpdate(
+    const updatedShowtime=await ShowTime.findByIdAndUpdate(
         showtimeId,
       {
         $set: {
           showDateTime: showDateTime??showtime.showDateTime,
           status: finalStatus??showtime.status,
+          price: price??showtime.price,
         },
       },
       { new: true }
@@ -105,14 +106,14 @@ const deleteShowtime = asyncHandler(async (req, res) => {
     if (!isValidObjectId(showtimeId)) {
       throw new ApiErrors(400, "Invalid showtime Id");
     }
-    const showtime = await Showtime.findById(showtimeId);
+    const showtime = await ShowTime.findById(showtimeId);
     if (!showtime) {
       throw new ApiErrors(404, "Showtime not found");
     }
     if (req.user.role !== "admin") {
       throw new ApiErrors(403, "Only admins can delete showtime");
     }
-    const deletedShowtime = await Showtime.findByIdAndDelete(showtimeId);
+    const deletedShowtime = await ShowTime.findByIdAndDelete(showtimeId);
     if (!deletedShowtime) {
       throw new ApiErrors(500, "Failed to delete showtime");
     }
@@ -125,7 +126,7 @@ const getShowtime = asyncHandler(async (req, res) => {
     if (!isValidObjectId(showtimeId)) {
       throw new ApiErrors(400, "Invalid showtime Id");
     }
-    const showtime = await Showtime.findById(showtimeId);
+    const showtime = await ShowTime.findById(showtimeId);
     if (!showtime) {
       throw new ApiErrors(404, "Showtime not found");
     }
@@ -136,7 +137,7 @@ const getShowtimesforMovie = asyncHandler(async (req, res) => {
     if (!isValidObjectId(movieId)) {
       throw new ApiErrors(400, "Invalid movie Id");
     }
-    const showtimes = await Showtime.findById({ movieId });
+    const showtimes = await ShowTime.findOne( {movieId} );
     return res
     .status(200)
     .json(new ApiResponse(200, showtimes, "Showtimes found"));
@@ -146,7 +147,7 @@ const getShowtimesforScreen = asyncHandler(async (req, res) => {
     if (!isValidObjectId(screenId)) {
       throw new ApiErrors(400, "Invalid screen Id");
     }
-    const showtimes = await Showtime.findById({ screenId });
+    const showtimes = await ShowTime.findOne({ screenId });
     return res
     .status(200)
     .json(new ApiResponse(200, showtimes, "Showtimes found"));
@@ -156,15 +157,15 @@ const getShowtimesforTheater = asyncHandler(async (req, res) => {
     if (!isValidObjectId(theaterId)) {
       throw new ApiErrors(400, "Invalid theater Id");
     }
-    const screens = await Screen.findById({ theaterId });
+    const screens = await Screen.find({ theaterId });
     const screenIds = screens.map((screen) => screen._id);
-    const showtimes = await Showtime.find({ screenId: { $in: screenIds } });
+    const showtimes = await ShowTime.find({ screenId: { $in: screenIds } });
     return res
     .status(200)
     .json(new ApiResponse(200, showtimes, "Showtimes found"));
 })
 const getAvailableShowtimes = asyncHandler(async (req, res) => {
-    const showtimes = await Showtime.find({ status: "Scheduled" });
+    const showtimes = await ShowTime.find({ status: "Scheduled" });
     return res
     .status(200)
     .json(new ApiResponse(200, showtimes, "Showtimes found"));
