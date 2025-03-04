@@ -9,6 +9,7 @@ import AboutUs from './Pages/AboutUs';
 import Contact from './Pages/Contact';
 import Footer from './Components/Footer';
 import TheaterSeating from './Components/TheaterSeating';
+import Bookings from './Pages/Bookings';
 
 function App() {
   return (
@@ -22,9 +23,9 @@ function App() {
           <Route path="/movie/:id" element={<MovieDetails />} />
           <Route path="/about" element={<AboutUs />} />
           <Route path="/contact" element={<Contact />} />
-          <Route path="/TheaterSeating" element={<TheaterSeating />} 
-          
-          />
+          <Route path="/TheaterSeating" element={<TheaterSeating />}/>
+          <Route path="/Bookings" element={<Bookings />} />
+
 
         </Routes>
       </div>

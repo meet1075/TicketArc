@@ -83,7 +83,7 @@ const Navbar = () => {
             ${menuOpen ? 'flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-8' : 'hidden md:flex'}`}>
             
             <a href="/" className="hover:text-red-500 transition-colors mt-2">Home</a>
-            <a href="/bookings" className="flex items-center space-x-1 hover:text-red-500 transition-colors">
+            <a href="/Bookings" className="flex items-center space-x-1 hover:text-red-500 transition-colors">
               <Ticket size={16} />
               <span>Bookings</span>
             </a>
