@@ -2,6 +2,13 @@ import React from 'react';
 import { Play } from 'lucide-react';
 
 const HeroSection = () => {
+  const scrollToMovies = () => {
+    const moviesSection = document.getElementById('movies-section');
+    if (moviesSection) {
+      moviesSection.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
   return (
     <div className="relative h-[600px] mt-16">
       <div 
@@ -16,7 +23,10 @@ const HeroSection = () => {
         <div className="max-w-2xl text-white">
           <h1 className="text-5xl font-bold mb-4">Experience Movies Like Never Before</h1>
           <p className="text-xl mb-8">Book your tickets now and get 50% off on your first booking!</p>
-          <button className="flex items-center space-x-2 bg-red-500 hover:bg-red-600 px-8 py-3 rounded-lg text-lg font-semibold transition-colors">
+          <button 
+            onClick={scrollToMovies}
+            className="flex items-center space-x-2 bg-red-500 hover:bg-red-600 px-8 py-3 rounded-lg text-lg font-semibold transition-colors"
+          >
             <Play size={20} />
             <span>Browse Movies</span>
           </button>

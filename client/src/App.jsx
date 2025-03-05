@@ -1,15 +1,15 @@
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
-import Navbar from './Components/Navbar';
-import Home from './Pages/Home';
-import Login from './Pages/Login';
-import Register from './Pages/Register';
-import MovieDetails from './Pages/MovieDetails';
-import AboutUs from './Pages/AboutUs';
-import Contact from './Pages/Contact';
-import Footer from './Components/Footer';
-import TheaterSeating from './Components/TheaterSeating';
-import Bookings from './Pages/Bookings';
+import Navbar from './components/Navbar';
+import Home from './pages/Home';
+import Login from './pages/Login';
+import Register from './pages/Register';
+import MovieDetails from './pages/MovieDetails';
+import AboutUs from './pages/AboutUs';
+import Contact from './pages/Contact';
+import Footer from './components/Footer';
+import TheaterSeating from './components/TheaterSeating';
+import Bookings from './pages/Bookings';
 
 function App() {
   return (
@@ -24,9 +24,7 @@ function App() {
           <Route path="/about" element={<AboutUs />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/TheaterSeating" element={<TheaterSeating />}/>
-          <Route path="/Bookings" element={<Bookings />} />
-
-
+          <Route path="/bookings" element={<Bookings />} />
         </Routes>
       </div>
       <Footer />
