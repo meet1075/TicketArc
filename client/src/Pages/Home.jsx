@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import HeroSection from '../components/HeroSection';
-import SearchBar from '../components/SearchBar';
-import MovieFilters from '../components/MovieFilters';
-import MovieCard from '../components/MovieCard';
+import HeroSection from '../Components/HeroSection';
+import SearchBar from '../Components/SearchBar';
+import MovieFilters from '../Components/MovieFilters';
+import MovieCard from '../Components/MovieCard';
 
 // Extended movie data with more diverse options
 const movies = [
