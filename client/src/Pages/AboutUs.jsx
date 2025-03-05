@@ -1,10 +1,17 @@
 import React from 'react';
 import { Linkedin, Github, Mail } from 'lucide-react';
+import { useEffect } from 'react';
 
 import MeetImg from '../assets/image/team/Meet.jpg';
 import TirthImg from '../assets/image/team/tirth.jpg';
 import ShubhamImg from '../assets/image/team/Shubham.jpg';
 import ShreyanImg from '../assets/image/team/Shreyan.jpg';
+
+function AboutUs() {
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
 
 const developers = [
   { 
@@ -45,7 +52,6 @@ const developers = [
   }
 ];
 
-function AboutUs() {
   return (
     <div className="pt-16">
       <div className="bg-gradient-to-r from-red-600 to-red-800 text-white py-20">
@@ -117,5 +123,4 @@ function AboutUs() {
     </div>
   );
 }
-
 export default AboutUs;
