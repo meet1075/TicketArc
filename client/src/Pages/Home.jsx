@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import HeroSection from '../Components/HeroSection';
-import SearchBar from '../Components/SearchBar';
-import MovieFilters from '../Components/MovieFilters';
-import MovieCard from '../Components/MovieCard';
+import HeroSection from '../components/HeroSection';
+import SearchBar from '../components/SearchBar';
+import MovieFilters from '../components/MovieFilters';
+import MovieCard from '../components/MovieCard';
 
 // Extended movie data with more diverse options
 const movies = [
@@ -132,8 +132,8 @@ function Home() {
     <>
       <HeroSection />
       
-      <main className="container mx-auto px-4 py-8" id="movies-section">
-        <div className="mb-8">
+      <main className="container mx-auto px-4 py-8">
+        <div className="mb-8 search-section">
           <SearchBar onSearch={handleSearch} />
         </div>
 

@@ -1,9 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState ,useEffect} from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Star, Clock, Calendar, ArrowLeft, MapPin } from 'lucide-react';
 import TheaterSeating from '../components/TheaterSeating';
 
 function MovieDetails() {
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
   const { id } = useParams();
   const navigate = useNavigate();
   const [selectedCinema, setSelectedCinema] = useState(null);

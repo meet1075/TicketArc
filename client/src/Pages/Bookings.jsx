@@ -1,8 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState ,useEffect} from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Film, Calendar, Clock, MapPin, Ticket, AlertCircle, LogIn } from 'lucide-react';
 
 function Bookings() {
+  useEffect(() => {
+      window.scrollTo(0, 0);
+    }, []);
   const navigate = useNavigate();
   // This would come from your auth context in a real app
   const [isLoggedIn, setIsLoggedIn] = useState(false);

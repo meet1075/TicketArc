@@ -1,10 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState , useEffect} from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Film } from 'lucide-react';
 import axios from "axios";
 import logo from "../assets/image/logo.png"
 
 function Login() {
+  useEffect(() => {
+      window.scrollTo(0, 0);
+    }, []);
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     email: '',
