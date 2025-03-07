@@ -21,6 +21,7 @@ import screenRouter from './routes/screen.routes.js'
 import showtimeRouter from './routes/showtime.routes.js'
 import seatRouter from './routes/seat.routes.js'
 import bookingRouter from './routes/booking.routes.js'
+import paymentRouter from './routes/payment.routes.js'
 app.use("/api/v1/user",userRouter)
 app.use("/api/v1/movie",movieRouter)
 app.use("/api/v1/theater",threaterRouter)
@@ -28,5 +29,6 @@ app.use("/api/v1/screen",screenRouter)
 app.use("/api/v1/showtime",showtimeRouter)
 app.use("/api/v1/seat",seatRouter)
 app.use("/api/v1/booking",bookingRouter)
+app.use("/api/v1/payment",paymentRouter)
 
 export { app }

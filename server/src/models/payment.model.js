@@ -1,4 +1,5 @@
 import mongoose, { Schema } from "mongoose";
+import mongooseAggregatePaginate from "mongoose-aggregate-paginate-v2";
 
 const paymentSchema = new Schema({
     bookingId: {
@@ -12,12 +13,12 @@ const paymentSchema = new Schema({
     },
     paymentMethod: {
         type: String,
-        enum: ["Credit Card", "Debit Card", "UPI", "Net Banking"],
+        enum: ["Credit Card", "Debit Card", "UPI"],
         required: true
     },
     paymentStatus: {
         type: String,
-        enum: ["Pending", "Completed", "Failed", "Refunded"],
+        enum: ["Pending", "Completed", "Refunded","Cancelled"],
         required: true
     },
     transactionId: {
@@ -31,5 +32,6 @@ const paymentSchema = new Schema({
         default: "Not Initiated"
     },
 },{timestamps:true});
+paymentSchema.plugin(mongooseAggregatePaginate);
 
 export const Payment = mongoose.model("Payment", paymentSchema);
