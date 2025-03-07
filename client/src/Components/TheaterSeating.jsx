@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Check } from 'lucide-react';
+import { X, Check, ArrowLeft } from 'lucide-react';
 
 const TheaterSeating = ({ onSeatSelect }) => {
   const [selectedSeats, setSelectedSeats] = useState([]);
@@ -16,7 +16,7 @@ const TheaterSeating = ({ onSeatSelect }) => {
       if (prev.includes(seatId)) {
         return prev.filter(seat => seat !== seatId);
       } else if (prev.length < 6) { // Maximum 6 seats per booking
-        return [...prev, seatId];
+        return [...prev, seatId].sort();
       }
       return prev;
     });
@@ -36,7 +36,6 @@ const TheaterSeating = ({ onSeatSelect }) => {
   return (
     <div className="max-w-4xl mx-auto p-6">
       <div className="mb-8">
-        <h3 className="text-2xl font-bold text-center mb-4">Select Your Seats</h3>
         <div className="flex justify-center space-x-8 mb-6">
           <div className="flex items-center">
             <div className="w-6 h-6 bg-gray-200 rounded mr-2"></div>
