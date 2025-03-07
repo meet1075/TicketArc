@@ -50,9 +50,16 @@ export const verifyUser = (req, res, next) => {
 };
 export const verifyRoles = (...allowedRoles) => (req, res, next) => {
   try {
-    if (!allowedRoles.includes(req.user.role)) {
-      throw new ApiErrors(403, `Forbidden: Allowed roles are ${allowedRoles.join(", ")}`);
+    // Fix: Split the string into an actual array
+    const roleList = allowedRoles.flatMap(role => role.split(",")); 
+
+    console.log("Allowed Roles (Parsed):", roleList);
+    console.log("User Role from Request:", req.user?.role);
+
+    if (!req.user || !roleList.includes(req.user.role.trim())) {
+      throw new ApiErrors(403, `Forbidden: Allowed roles are ${roleList.join(", ")}`);
     }
+
     next();
   } catch (error) {
     next(error);

@@ -5,12 +5,6 @@ import mongoose, { isValidObjectId }  from "mongoose";
 import {Booking} from "../models/booking.model.js"
 import { Payment } from "../models/payment.model.js";
 import { v4 as uuidv4 } from "uuid"; // Import UUID for unique transaction ID
-import { isValidObjectId } from "mongoose";
-import asyncHandler from "express-async-handler";
-import { Payment } from "../models/Payment.js";
-import { Booking } from "../models/Booking.js";
-import ApiErrors from "../utils/ApiErrors.js";
-import { v4 as uuidv4 } from "uuid";
 const createPayment = asyncHandler(async (req, res) => {
     const { bookingId } = req.params;
     const { paymentMethod, cardNumber, expiryDate, upiId } = req.body;
