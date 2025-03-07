@@ -20,6 +20,7 @@ import threaterRouter from './routes/theater.routes.js'
 import screenRouter from './routes/screen.routes.js'
 import showtimeRouter from './routes/showtime.routes.js'
 import seatRouter from './routes/seat.routes.js'
+import seatAvailabilityRouter from './routes/seatAvailability.routes.js'
 import bookingRouter from './routes/booking.routes.js'
 import paymentRouter from './routes/payment.routes.js'
 app.use("/api/v1/user",userRouter)
@@ -30,5 +31,5 @@ app.use("/api/v1/showtime",showtimeRouter)
 app.use("/api/v1/seat",seatRouter)
 app.use("/api/v1/booking",bookingRouter)
 app.use("/api/v1/payment",paymentRouter)
-
+app.use("/api/v1/seatAvailability",seatAvailabilityRouter)
 export { app }
