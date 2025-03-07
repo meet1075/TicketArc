@@ -180,7 +180,9 @@ const reserveSeat = asyncHandler(async (req, res) => {
 
   const seat = await SeatAvailability.findById(seatAvailabilityId);
   if (!seat) throw new ApiErrors(404, "Seat not found for this showtime");
-  if (!seat.isAvailable || seat.reservedBy) throw new ApiErrors(400, "Seat is already reserved");
+  if (!seat.isAvailable || seat.reservedBy) {
+    throw new ApiErrors(400, "Seat is already reserved");
+}
 
   
   seat.reservedBy = userId;
@@ -200,7 +202,6 @@ const reserveSeat = asyncHandler(async (req, res) => {
   return res.status(200).json(new ApiResponse(200, seat, "Seat reserved successfully for 5 minutes"));
 });
 
-// Release a reserved seat
 const releaseSeat = asyncHandler(async (req, res) => {
   const { seatAvailabilityId } = req.params;
   const userId = req.user?._id; 
