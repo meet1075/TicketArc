@@ -1,18 +1,15 @@
 import cron from "node-cron";
-import mongoose from "mongoose";
 import dotenv from "dotenv";
-import connectDB from "../db/index.js"; // Use the correct path based on your setup
-import { SeatAvailability } from "../models/seatAvailability.model.js"; // Fixed path
+import connectDB from "../db/index.js"; // Ensure correct path to index.js
+import { SeatAvailability } from "../models/seatAvailability.model.js"; 
 
 dotenv.config();
 
-// Ensure DB connection before scheduling cron job
 const initializeJob = async () => {
     try {
         await connectDB(); // Connect to MongoDB
-        console.log("✅ Cron job started: Releasing expired seats every minute.");
 
-        cron.schedule("* * * * *", async () => {  // Runs every minute
+        cron.schedule("* * * * *", async () => {  
             try {
                 const result = await SeatAvailability.updateMany(
                     {
@@ -36,4 +33,4 @@ const initializeJob = async () => {
     }
 };
 
-initializeJob();
+initializeJob()
