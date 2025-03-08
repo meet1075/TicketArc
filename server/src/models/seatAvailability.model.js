@@ -15,11 +15,19 @@ const seatAvailabilitySchema = new Schema({
         type: Boolean,
         default: true
     },
+    isReserved: {  // New field to track reservations
+        type: Boolean,
+        default: false
+    },
     reservedBy: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
         default: null
+    },
+    reservationExpiry: { 
+        type: Date,
+        default: null
     }
-},{timestamps:true});
+}, { timestamps: true });
 
 export const SeatAvailability = mongoose.model("SeatAvailability", seatAvailabilitySchema);

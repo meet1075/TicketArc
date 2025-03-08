@@ -1,34 +1,3 @@
-// import mongoose, { Schema } from 'mongoose';
-
-// const bookingSchema = new Schema({
-//     showTimeId: {
-//         type: mongoose.Schema.Types.ObjectId,
-//         ref: "ShowTime"
-//     },
-//     userId: {
-//         type: mongoose.Schema.Types.ObjectId,
-//         ref: "User"
-//     },
-//     seats: [{
-//         type: mongoose.Schema.Types.ObjectId,
-//         ref: "Seat"
-//     }],
-//     bookingTime: {
-//         type: Date,
-//         required: true
-//     },
-//     totalAmount: {
-//         type: Number,
-//         required: true
-//     },
-//     bookingStatus: {
-//         type: String,
-//         enum: ["Pending", "Confirmed", "Cancelled"],
-//         default: "Pending"
-//     }
-// },{timestamps:true});
-
-// export const Booking = mongoose.model("Booking", bookingSchema);
 import mongoose, { Schema } from "mongoose";
 
 const bookingSchema = new Schema(
@@ -58,30 +27,31 @@ const bookingSchema = new Schema(
       ref: "User",
       required: true,
     },
-    seats: [{
+    seats: [
+      {
         seatId: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "Seat",
-            required: true
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "SeatAvailability", // Updated reference
+          required: true,
         },
         seatNumber: {
-            type: String,
-            required: true
+          type: String,
+          required: true,
         },
         seatType: {
-            type: String,
-            enum: ["Regular", "Premium"],
-            default: "Regular"
+          type: String,
+          enum: ["Regular", "Premium"], // Update based on actual seat types
+          default: "Regular",
         },
-        price:{
-            type: Number,
-            required: true
-        }
-    }],
+        price: {
+          type: Number,
+          required: true,
+        },
+      },
+    ],
     bookingTime: {
       type: Date,
-      required: true,
-      default: Date.now,
+      default: Date.now, // Removed `required: true`
     },
     totalAmount: {
       type: Number,
@@ -90,6 +60,11 @@ const bookingSchema = new Schema(
     bookingStatus: {
       type: String,
       enum: ["Pending", "Confirmed", "Cancelled"],
+      default: "Pending",
+    },
+    paymentStatus: {
+      type: String,
+      enum: ["Pending", "Success", "Failed"], // Added field for tracking payments
       default: "Pending",
     },
   },

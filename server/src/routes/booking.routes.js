@@ -1,28 +1,25 @@
 import { Router } from "express";
 import {
     createBooking,
-    getBookingDetails,  
-    geAllBookingOfShowTime,
-    getBookingByScreen,
-    geAllBookingOfTheater,
-    getBookingByUserId,
-    confirmBooking,
+    getBookingDetails,
     cancelBooking,
-    seatAvailability,
-    AllBookingOfUser,
+    getAllBookingsOfShowTime,
+    getAllBookingsOfUser,
+    seatAvailability
 } from "../controllers/booking.controller.js";
 import { upload } from "../middlewares/multer.middleware.js";
-import { verifyAdmin,verifyJWT,verifyRoles } from "../middlewares/auth.middleware.js";
+import { verifyJWT, verifyRoles } from "../middlewares/auth.middleware.js";
+
 const router = Router();
-router.use(verifyJWT,upload.none());
-router.route("/createBooking").post(verifyRoles("user"),createBooking);
-router.route("/getBookingDetails/:bookingId").get(verifyRoles("admin,user"),getBookingDetails);
-router.route("/geAllBookingOfShowTime/:showTimeId").get(verifyRoles("admin"),geAllBookingOfShowTime);
-router.route("/getBookingByScreen/:screenId").get(verifyRoles("admin"),getBookingByScreen);
-router.route("/geAllBookingOfTheater/:theaterId").get(verifyRoles("admin"),geAllBookingOfTheater);
-router.route("/getBookingByUserId/:userId").get(verifyRoles("user"),getBookingByUserId);
-router.route("/confirmBooking/:bookingId").patch(verifyRoles("admin,user"),confirmBooking);
-router.route("/cancelBooking/:bookingId").patch(verifyRoles("admin,user"),cancelBooking);
-router.route("/seatAvailability/:showTimeId").get(verifyRoles("admin,user"),seatAvailability);
-router.route("/AllBookingOfUser").get(verifyRoles("user,admin"),AllBookingOfUser);
+
+router.use(verifyJWT, upload.none());
+
+// Booking routes
+router.route("/create").post(verifyRoles("user"), createBooking);
+router.route("/:bookingId").get(verifyRoles("admin", "user"), getBookingDetails);
+router.route("/:bookingId/cancel").patch(verifyRoles("admin", "user"), cancelBooking);
+router.route("/showtime/:showTimeId").get(verifyRoles("admin"), getAllBookingsOfShowTime);
+router.route("/user/:userId").get(verifyRoles("user", "admin"), getAllBookingsOfUser);
+router.route("/availability/:showTimeId").get(verifyRoles("admin", "user"), seatAvailability);
+
 export default router;
