@@ -51,7 +51,7 @@ const HeroSection = () => {
   };
 
   return (
-    <div className="relative h-[600px] mt-16">
+    <div className="relative h-[60vh] md:h-[70vh] lg:h-[80vh] mt-16">
       {heroSlides.map((slide, index) => (
         <div
           key={index}
@@ -67,13 +67,17 @@ const HeroSection = () => {
           >
             <div className="absolute inset-0 bg-gradient-to-r from-black/90 to-black/50" />
           </div>
-          <div className="relative container mx-auto px-4 h-full flex items-center">
+          <div className="relative container mx-auto px-8 md:px-12 h-full flex items-center">
             <div className="max-w-2xl text-white">
-              <h1 className="text-5xl font-bold mb-4">{slide.title}</h1>
-              <p className="text-xl mb-8">{slide.subtitle}</p>
+              <h1 className="text-[clamp(1.5rem,5vw,3rem)] font-bold mb-4 leading-tight">
+                {slide.title}
+              </h1>
+              <p className="text-[clamp(1rem,3vw,1.25rem)] mb-8 leading-relaxed">
+                {slide.subtitle}
+              </p>
               <button 
                 onClick={scrollToSearch}
-                className="flex items-center space-x-2 bg-red-500 hover:bg-red-600 px-8 py-3 rounded-lg text-lg font-semibold transition-colors"
+                className="flex items-center space-x-2 bg-red-500 hover:bg-red-600 px-6 py-3 rounded-lg text-[clamp(0.875rem,2vw,1.125rem)] font-semibold transition-colors"
               >
                 <Play size={20} />
                 <span>Browse Movies</span>
@@ -83,22 +87,26 @@ const HeroSection = () => {
         </div>
       ))}
 
-      {/* Navigation Arrows */}
-      <button 
-        onClick={prevSlide}
-        className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black/50 hover:bg-black/75 text-white p-2 rounded-full transition-colors"
-      >
-        <ChevronLeft size={24} />
-      </button>
-      <button 
-        onClick={nextSlide}
-        className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black/50 hover:bg-black/75 text-white p-2 rounded-full transition-colors"
-      >
-        <ChevronRight size={24} />
-      </button>
+      {/* Navigation Arrows - Adjusted positioning and z-index */}
+      <div className="absolute inset-x-0 top-1/2 transform -translate-y-1/2 flex justify-between items-center px-4 md:px-8 z-20 pointer-events-none">
+        <button 
+          onClick={prevSlide}
+          className="bg-black/50 hover:bg-black/75 text-white p-3 rounded-full transition-colors pointer-events-auto transform hover:scale-110"
+          aria-label="Previous slide"
+        >
+          <ChevronLeft size={24} />
+        </button>
+        <button 
+          onClick={nextSlide}
+          className="bg-black/50 hover:bg-black/75 text-white p-3 rounded-full transition-colors pointer-events-auto transform hover:scale-110"
+          aria-label="Next slide"
+        >
+          <ChevronRight size={24} />
+        </button>
+      </div>
 
       {/* Slide Indicators */}
-      <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex space-x-2">
+      <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex space-x-2 z-20">
         {heroSlides.map((_, index) => (
           <button
             key={index}
@@ -106,6 +114,7 @@ const HeroSection = () => {
               index === currentSlide ? 'bg-red-500 w-8' : 'bg-white/50 hover:bg-white/75'
             }`}
             onClick={() => setCurrentSlide(index)}
+            aria-label={`Go to slide ${index + 1}`}
           />
         ))}
       </div>

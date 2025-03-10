@@ -14,6 +14,7 @@ import Bookings from './pages/Bookings';
 import AdminHome from './pages/AdminHome';
 import PrivacyPolicy from './pages/Policy';
 import TermsConditions from './pages/TermsConditions';
+import Settings from './pages/Settings';
 
 function App() {
   // This would come from your auth context in a real app
@@ -36,6 +37,7 @@ function App() {
           <Route path="/admin" element={<AdminHome />} />
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
           <Route path="/terms-conditions" element={<TermsConditions />} />
+          <Route path="/settings" element={<Settings />} />
         </Routes>
       </div>
       {!isAdmin && <Footer />}
