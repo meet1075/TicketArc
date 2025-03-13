@@ -2,7 +2,7 @@ import { Router } from "express";
 import { verifyJWT, verifyRoles } from "../middlewares/auth.middleware.js";
 import {
     createPayment,
-    confirmPayment,
+    
     getPaymentByBookingId,
     getPaymentByTransactionId,
     getAllPayments,
@@ -16,10 +16,8 @@ const router = Router();
 router.use(verifyJWT, upload.none());
 
 // User routes
-router.route("/createPayment/:bookingId").post(verifyRoles("user"), createPayment);
-router.route("/confirmPayment/:paymentId").post(verifyRoles("user"), confirmPayment);
+router.route("/createPayment").post(verifyRoles("user"), createPayment);
 router.route("/cancelPayment/:paymentId").patch(verifyRoles("user"), cancelPayment);
-
 router.route("/PaymentByBookingId/:bookingId").get(verifyRoles("admin", "user"), getPaymentByBookingId);
 router.route("/PaymentByTransactionId/:transactionId").get(verifyRoles("admin", "user"), getPaymentByTransactionId);
 
