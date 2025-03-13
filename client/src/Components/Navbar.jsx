@@ -1,19 +1,22 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { User, Ticket, LogIn, Menu, X, LogOut, ChevronDown } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
+import { User, Ticket, LogIn, Menu, X, LogOut, ChevronDown, Bell, Settings } from 'lucide-react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import logo from "../assets/image/logo.png";
 
 const Navbar = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [notifications, setNotifications] = useState(3);
   const dropdownRef = useRef(null);
 
-  // Mock user data - in a real app, this would come from your auth context
   const user = {
     name: "John Doe",
-    photo: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
+    photo: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80",
+    points: 750
   };
 
   useEffect(() => {
@@ -27,6 +30,11 @@ const Navbar = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  useEffect(() => {
+    setMenuOpen(false);
+    setDropdownOpen(false);
+  }, [location]);
+
   const handleLogout = () => {
     setIsLoggedIn(false);
     setDropdownOpen(false);
@@ -37,65 +45,122 @@ const Navbar = () => {
     navigate('/login');
   };
 
+  const toggleLoginStatus = () => {
+    setIsLoggedIn(!isLoggedIn);
+  };
+
+  const dropdownVariants = {
+    hidden: { 
+      opacity: 0,
+      y: -10,
+      transition: {
+        duration: 0.2
+      }
+    },
+    visible: { 
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.2
+      }
+    }
+  };
+
   return (
     <nav className="fixed top-0 w-full bg-black/95 text-white shadow-lg z-50">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
-          {/* Logo and Brand Name */}
           <Link to="/" className="flex items-center space-x-2 hover:text-red-500 transition-colors">
             <img src={logo} className="h-8 w-auto" alt="Logo" />
-            <span className="text-xl font-bold">TicketArc</span>
+            <span className="text-base md:text-xl font-bold">TicketArc</span>
           </Link>
 
-          {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-8">
-            <Link to="/" className="hover:text-red-500 transition-colors">Home</Link>
+            <Link to="/" className="text-sm md:text-base hover:text-red-500 transition-colors">Home</Link>
             
+            <button 
+              onClick={toggleLoginStatus}
+              className="text-xs px-2 py-1 bg-gray-700 rounded"
+            >
+              Toggle Login (Demo)
+            </button>
+
             {isLoggedIn ? (
               <div className="relative" ref={dropdownRef}>
-                <button 
-                  onClick={() => setDropdownOpen(!dropdownOpen)}
-                  className="flex items-center space-x-2 hover:text-red-500 transition-colors"
-                >
-                  <img 
-                    src={user.photo} 
-                    alt={user.name}
-                    className="w-8 h-8 rounded-full"
-                  />
-                  <span>Hello, {user.name}</span>
-                  <ChevronDown size={16} />
-                </button>
+                <div className="flex items-center space-x-4">
+                  <button className="relative hover:text-red-500 transition-colors">
+                    <Bell size={20} />
+                    {notifications > 0 && (
+                      <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
+                        {notifications}
+                      </span>
+                    )}
+                  </button>
 
-                {/* Dropdown Menu */}
-                {dropdownOpen && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 text-gray-800">
-                    <Link 
-                      to="/profile" 
-                      className="block px-4 py-2 hover:bg-gray-100 transition-colors"
-                      onClick={() => setDropdownOpen(false)}
+                  <button 
+                    onClick={() => setDropdownOpen(!dropdownOpen)}
+                    className="flex items-center space-x-2 hover:text-red-500 transition-colors"
+                  >
+                    <img 
+                      src={user.photo} 
+                      alt={user.name}
+                      className="w-8 h-8 rounded-full border-2 border-transparent hover:border-red-500 transition-colors"
+                    />
+                    <span className="text-sm md:text-base">Hello, {user.name}</span>
+                    <ChevronDown size={16} className={`transform transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} />
+                  </button>
+                </div>
+
+                <AnimatePresence>
+                  {dropdownOpen && (
+                    <motion.div
+                      initial="hidden"
+                      animate="visible"
+                      exit="hidden"
+                      variants={dropdownVariants}
+                      className="absolute right-0 mt-2 w-64 bg-white rounded-md shadow-lg py-1 text-gray-800"
                     >
-                      Profile
-                    </Link>
-                    <Link 
-                      to="/bookings" 
-                      className="block px-4 py-2 hover:bg-gray-100 transition-colors"
-                      onClick={() => setDropdownOpen(false)}
-                    >
-                      Bookings
-                    </Link>
-                    <button 
-                      onClick={handleLogout}
-                      className="block w-full text-left px-4 py-2 text-red-600 hover:bg-gray-100 transition-colors"
-                    >
-                      Logout
-                    </button>
-                  </div>
-                )}
+                      <div className="px-4 py-2 border-b border-gray-100">
+                        <p className="text-sm text-gray-500">Loyalty Points</p>
+                        <p className="font-bold text-red-500">{user.points} points</p>
+                      </div>
+                      
+                      <Link 
+                        to="/profile" 
+                        className="flex items-center px-4 py-2 hover:bg-gray-100 transition-colors"
+                      >
+                        <User size={16} className="mr-2" />
+                        <span>Profile</span>
+                      </Link>
+                      <Link 
+                        to="/bookings" 
+                        className="flex items-center px-4 py-2 hover:bg-gray-100 transition-colors"
+                      >
+                        <Ticket size={16} className="mr-2" />
+                        <span>Bookings</span>
+                      </Link>
+                      <Link 
+                        to="/settings" 
+                        className="flex items-center px-4 py-2 hover:bg-gray-100 transition-colors"
+                      >
+                        <Settings size={16} className="mr-2" />
+                        <span>Settings</span>
+                      </Link>
+                      <button 
+                        onClick={handleLogout}
+                        className="flex items-center w-full px-4 py-2 hover:bg-gray-100 transition-colors"
+                      >
+                        <LogOut size={16} className="mr-2" />
+                        <span>Logout</span>
+                      </button>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             ) : (
               <button 
                 onClick={handleLogin}
-                className="flex items-center space-x-1 bg-red-500 hover:bg-red-600 px-4 py-2 rounded-md transition-colors"
+                className="flex items-center space-x-1 bg-red-500 hover:bg-red-600 px-4 py-2 rounded-md transition-colors text-sm md:text-base"
               >
                 <LogIn size={16} />
                 <span>Login</span>
@@ -103,7 +168,6 @@ const Navbar = () => {
             )}
           </div>
 
-          {/* Mobile Menu Button */}
           <button 
             className="md:hidden p-2 hover:bg-red-500 rounded-lg transition-colors"
             onClick={() => setMenuOpen(!menuOpen)}
@@ -112,60 +176,87 @@ const Navbar = () => {
           </button>
         </div>
 
-        {/* Mobile Menu */}
-        <div className={`md:hidden transition-all duration-300 ease-in-out ${menuOpen ? 'max-h-64 opacity-100' : 'max-h-0 opacity-0 overflow-hidden'}`}>
-          <div className="py-4 space-y-4">
-            <Link 
-              to="/" 
-              className="block hover:text-red-500 transition-colors"
-              onClick={() => setMenuOpen(false)}
+        <AnimatePresence>
+          {menuOpen && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="md:hidden overflow-hidden"
             >
-              Home
-            </Link>
-            
-            {isLoggedIn ? (
-              <>
+              <div className="py-4 space-y-4">
                 <Link 
-                  to="/profile" 
-                  className="block hover:text-red-500 transition-colors"
-                  onClick={() => setMenuOpen(false)}
+                  to="/" 
+                  className="block hover:text-red-500 transition-colors text-sm"
                 >
-                  Profile
+                  Home
                 </Link>
-                <Link 
-                  to="/bookings" 
-                  className="block hover:text-red-500 transition-colors"
-                  onClick={() => setMenuOpen(false)}
-                >
-                  Bookings
-                </Link>
-                <button 
-                  onClick={() => {
-                    handleLogout();
-                    setMenuOpen(false);
-                  }}
-                  className="block w-full text-left text-red-500 hover:text-red-600 transition-colors"
-                >
-                  Logout
-                </button>
-              </>
-            ) : (
-              <button 
-                onClick={() => {
-                  handleLogin();
-                  setMenuOpen(false);
-                }}
-                className="flex items-center space-x-1 bg-red-500 hover:bg-red-600 px-4 py-2 rounded-md transition-colors w-full"
-              >
-                <LogIn size={16} />
-                <span>Login</span>
-              </button>
-            )}
-          </div>
-        </div>
+                
+                {isLoggedIn ? (
+                  <>
+                    <div className="flex items-center justify-between py-2 border-t border-gray-700">
+                      <div className="flex items-center space-x-2">
+                        <img 
+                          src={user.photo} 
+                          alt={user.name}
+                          className="w-8 h-8 rounded-full"
+                        />
+                        <span className="text-sm">{user.name}</span>
+                      </div>
+                      {notifications > 0 && (
+                        <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full">
+                          {notifications} new
+                        </span>
+                      )}
+                    </div>
+                    <Link 
+                      to="/profile" 
+                      className="block hover:text-red-500 transition-colors text-sm"
+                    >
+                      Profile
+                    </Link>
+                    <Link 
+                      to="/bookings" 
+                      className="block hover:text-red-500 transition-colors text-sm"
+                    >
+                      Bookings
+                    </Link>
+                    <Link 
+                      to="/settings" 
+                      className="block hover:text-red-500 transition-colors text-sm"
+                    >
+                      Settings
+                    </Link>
+                    <button 
+                      onClick={() => {
+                        handleLogout();
+                        setMenuOpen(false);
+                      }}
+                      className="block w-full text-left text-red-500 hover:text-red-600 transition-colors text-sm"
+                    >
+                      Logout
+                    </button>
+                  </>
+                ) : (
+                  <button 
+                    onClick={() => {
+                      handleLogin();
+                      setMenuOpen(false);
+                    }}
+                    className="flex items-center space-x-1 hover:bg-red-500 py-2 rounded-md transition-colors w-full text-sm"
+                  >
+                    <LogIn size={16} />
+                    <span>Login</span>
+                  </button>
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </nav>
   );
-};
+}
 
 export default Navbar;
