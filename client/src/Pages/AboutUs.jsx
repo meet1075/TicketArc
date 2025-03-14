@@ -28,8 +28,8 @@ const developers = [
     name: "Tirth Sorathia",
     role: "Frontend Developer",
     email: "23dce116@charusat.edu.in",
-    linkedin: "",
-    github: "",
+    linkedin: "www.linkedin.com/in/tirth-sorathia-4b0078288",
+    github: "https://github.com/tirth2404",
     image: TirthImg
   },
   {
@@ -58,8 +58,7 @@ const developers = [
         <div className="container mx-auto px-4">
           <h1 className="text-4xl font-bold text-center mb-4">Meet Our Team</h1>
           <p className="text-gray-100 text-center max-w-2xl mx-auto">
-            We're a passionate team of developers and designers dedicated to bringing you the best movie booking experience.
-            Our diverse skills and commitment to excellence ensure that TicketArc remains at the forefront of innovation.
+          We are second-year Computer Engineering students at DEPSTAR, CHARUSAT, driven by a passion for technology and problem-solving. Our team thrives on innovation, collaboration, and a commitment to developing solutions that create a meaningful impact. Through continuous learning and hands-on experience, we aim to bridge the gap between ideas and real-world applications, shaping a future powered by technology.
           </p>
         </div>
       </div>
