@@ -5,18 +5,44 @@ import mongoose, { isValidObjectId } from "mongoose";
 import { Booking } from "../models/booking.model.js";
 import { Payment } from "../models/payment.model.js";
 import { v4 as uuidv4 } from "uuid"; 
-
+import { SeatAvailability } from "../models/seatAvailability.model.js";
+import { ShowTime } from "../models/showtime.model.js";
 const createPayment = asyncHandler(async (req, res) => {
-    const { bookingId } = req.params;
-    const { paymentMethod, cardNumber, expiryDate, upiId } = req.body;
+    const { seatAvailabilityIds, showTimeId, paymentMethod, cardNumber, expiryDate, upiId } = req.body;
 
-    if (!isValidObjectId(bookingId)) throw new ApiErrors(400, "Invalid booking ID");
+    if (!seatAvailabilityIds || !Array.isArray(seatAvailabilityIds) || seatAvailabilityIds.length === 0) {
+        throw new ApiErrors(400, "At least one seat must be selected for payment.");
+    }
 
-    const booking = await Booking.findById(bookingId);
-    if (!booking) throw new ApiErrors(404, "Booking not found");
+    if (!showTimeId || !mongoose.Types.ObjectId.isValid(showTimeId)) {
+        throw new ApiErrors(400, "Invalid or missing showTimeId.");
+    }
 
-    if (booking.totalAmount <= 0) throw new ApiErrors(400, "No tickets selected, payment cannot be processed");
+    // Validate that the showtime exists
+    const showtime = await ShowTime.findById(showTimeId);
+    if (!showtime) {
+        throw new ApiErrors(404, "Showtime not found.");
+    }
 
+    // Fetch all reserved seats
+    const seats = await SeatAvailability.find({ _id: { $in: seatAvailabilityIds }, isReserved: true });
+
+    if (seats.length !== seatAvailabilityIds.length) {
+        throw new ApiErrors(400, "One or more selected seats are not reserved.");
+    }
+
+    // Validate that all seats belong to the same showtime
+    if (seats.some(seat => seat.showTimeId.toString() !== showTimeId)) {
+        throw new ApiErrors(400, "Selected seats do not match the provided showtime.");
+    }
+
+    // Calculate total amount
+    let totalAmount = 0;
+    seats.forEach(seat => {
+        totalAmount += seat.type === "VIP" ? showtime.price.Premium : showtime.price.Regular;
+    });
+
+    // Validate payment method
     const allowedMethods = ["Credit Card", "Debit Card", "UPI"];
     if (!paymentMethod || !allowedMethods.includes(paymentMethod)) throw new ApiErrors(400, "Invalid payment method");
 
@@ -33,32 +59,18 @@ const createPayment = asyncHandler(async (req, res) => {
     let transactionId;
     do { transactionId = uuidv4(); } while (await Payment.findOne({ transactionId }));
 
+    // Create Payment linked to reserved seats
     const payment = await Payment.create({
-        bookingId,
-        amount: booking.totalAmount,
+        seatAvailabilityIds,
+        amount: totalAmount,
         paymentMethod,
         paymentStatus: "Pending",
         transactionId,
+        showTimeId,  // Store the showtime reference in payment
         ...paymentDetails,
     });
 
     return res.status(200).json(new ApiResponse(200, payment, "Payment created successfully"));
-});
-
-const confirmPayment = asyncHandler(async (req, res) => {
-    const { paymentId } = req.params;
-
-    if (!isValidObjectId(paymentId)) throw new ApiErrors(400, "Invalid Payment ID");
-
-    const payment = await Payment.findById(paymentId);
-    if (!payment) throw new ApiErrors(404, "No Payment Found");
-
-    if (payment.paymentStatus === "Completed") throw new ApiErrors(400, "Payment already confirmed");
-
-    payment.paymentStatus = "Completed";
-    await payment.save();
-
-    return res.status(200).json(new ApiResponse(200, { payment }, "Payment confirmed successfully"));
 });
 
 const getPaymentByBookingId = asyncHandler(async (req, res) => {
@@ -139,10 +151,8 @@ const markRefundAsDone = asyncHandler(async (req, res) => {
 
     return res.status(200).json(new ApiResponse(200, { payment }, "Refund marked as completed successfully"));
 });
-
 export {
     createPayment,
-    confirmPayment,
     getPaymentByBookingId,
     getPaymentByTransactionId,
     getAllPayments,

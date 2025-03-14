@@ -2,9 +2,9 @@ import mongoose, { Schema } from "mongoose";
 import mongooseAggregatePaginate from "mongoose-aggregate-paginate-v2";
 
 const paymentSchema = new Schema({
-    bookingId: {
+    seatAvailabilityId: {  // Link to reserved seat
         type: mongoose.Schema.Types.ObjectId,
-        ref: "Booking",
+        ref: "SeatAvailability",
         required: true
     },
     amount: {
@@ -18,7 +18,7 @@ const paymentSchema = new Schema({
     },
     paymentStatus: {
         type: String,
-        enum: ["Pending", "Completed", "Refunded","Cancelled"],
+        enum: ["Pending", "Completed", "Refunded", "Cancelled"],
         required: true
     },
     transactionId: {
@@ -32,6 +32,7 @@ const paymentSchema = new Schema({
         default: "Not Initiated"
     },
 },{timestamps:true});
+
 paymentSchema.plugin(mongooseAggregatePaginate);
 
 export const Payment = mongoose.model("Payment", paymentSchema);

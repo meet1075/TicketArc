@@ -4,35 +4,59 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { Booking } from "../models/booking.model.js";
 import { SeatAvailability } from "../models/seatAvailability.model.js";
 import mongoose from "mongoose";
+import { Payment } from "../models/payment.model.js";
 
 const createBooking = asyncHandler(async (req, res) => {
-  const { showTimeId, movieId, theaterId, screenId, userId, seats, totalAmount } = req.body;
-  
-  const seatIds = seats.map((seat) => seat.seatId);
-  const bookedSeats = await SeatAvailability.find({ _id: { $in: seatIds }, isBooked: true });
-  
-  if (bookedSeats.length !== 0) {
-    throw new ApiErrors(400, "Some seats are already booked.")
+  const { paymentId } = req.params; // Payment ID from URL params
+  const { seats, totalAmount } = req.body;
+  const userId = req.user._id; // Get userId from auth middleware
+
+  if (!userId) throw new ApiErrors(401, "User not authenticated");
+
+  // Validate payment
+  const payment = await Payment.findById(paymentId);
+  if (!payment) throw new ApiErrors(404, "Payment not found");
+  if (payment.paymentStatus !== "Completed") {
+      throw new ApiErrors(400, "Payment is not completed. Cannot confirm booking.");
   }
-  
+
+  // Get seat details from Payment
+  const seat = await SeatAvailability.findById(payment.seatAvailabilityId);
+  if (!seat) throw new ApiErrors(404, "Seat reservation not found");
+  if (!seat.isReserved) throw new ApiErrors(400, "Seat is no longer reserved");
+
+  const showTimeId = seat.showTimeId;
+  const movieId = seat.movieId;
+  const theaterId = seat.theaterId;
+  const screenId = seat.screenId;
+
+  // Create the booking
   const booking = await Booking.create({
-    showTimeId,
-    movieId,
-    theaterId,
-    screenId,
-    userId,
-    seats,
-    totalAmount,
-    bookingStatus: "Confirmed",
-    paymentStatus: "Success"
+      showTimeId,
+      movieId,
+      theaterId,
+      screenId,
+      userId,
+      seats,
+      totalAmount,
+      paymentId, // Now we link the booking to the existing payment
+      bookingStatus: "Confirmed",
+      paymentStatus: "Success",
   });
 
-  await SeatAvailability.updateMany({ _id: { $in: seatIds } }, { $set: { isBooked: true } });
+  // Update seat to mark as booked
+  await SeatAvailability.updateOne(
+      { _id: payment.seatAvailabilityId },
+      { $set: { isBooked: true, isReserved: false, reservedBy: null } }
+  );
 
-  return res
-  .status(201)
-  .json(new ApiResponse(201, { booking }, "Booking confirmed successfully."));
+  // Attach bookingId to payment
+  payment.bookingId = booking._id;
+  await payment.save();
+
+  return res.status(201).json(new ApiResponse(201, { booking }, "Booking confirmed successfully."));
 });
+
 
 const getBookingDetails = asyncHandler(async (req, res) => {
   const { bookingId } = req.params;
