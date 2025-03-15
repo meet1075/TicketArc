@@ -179,21 +179,28 @@ const confirmSeatBooking = asyncHandler(async (req, res) => {
         throw new ApiErrors(401, "User not authenticated");
     }
 
-    const seat = await SeatAvailability.findById(seatAvailabilityId);
+    // Fetch the seat with `seatNumber` explicitly selected
+    const seat = await SeatAvailability.findById(seatAvailabilityId).select("seatNumber isAvailable isReserved reservedBy");
+
     if (!seat) throw new ApiErrors(404, "Seat not found");
     if (!seat.isAvailable) throw new ApiErrors(400, "Seat is already booked");
     if (seat.isReserved) throw new ApiErrors(400, "Seat is already reserved by another user");
 
     // Reserve the seat for this user (expires in 5 mins)
-    seat.isReserved = true;
-    seat.isAvailable = false;  // Fix: Ensure seat is marked unavailable
-    seat.reservedBy = userId;
-    seat.reservationExpiry = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes from now
+    const updatedSeat = await SeatAvailability.findByIdAndUpdate(
+        seatAvailabilityId,
+        {
+            isReserved: true,
+            isAvailable: false, // Ensure seat is marked unavailable
+            reservedBy: userId,
+            reservationExpiry: new Date(Date.now() + 5 * 60 * 1000), // 5 minutes from now
+        },
+        { new: true, runValidators: true } // Ensures updated document is returned
+    );
 
-    await seat.save();
-
-    return res.status(200).json(new ApiResponse(200, seat, "Seat reserved successfully for 5 minutes"));
+    return res.status(200).json(new ApiResponse(200, updatedSeat, "Seat reserved successfully for 5 minutes"));
 });
+
 
 const cancelSeatBooking = asyncHandler(async (req, res) => {
     const { seatAvailabilityId } = req.params;

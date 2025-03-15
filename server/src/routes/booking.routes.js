@@ -15,7 +15,7 @@ const router = Router();
 router.use(verifyJWT, upload.none());
 
 // Booking routes
-router.route("/create").post(verifyRoles("user"), createBooking);
+router.route("/create/:paymentId").post(verifyRoles("user"), createBooking);
 router.route("/:bookingId").get(verifyRoles("admin", "user"), getBookingDetails);
 router.route("/:bookingId/cancel").patch(verifyRoles("admin", "user"), cancelBooking);
 router.route("/showtime/:showTimeId").get(verifyRoles("admin"), getAllBookingsOfShowTime);

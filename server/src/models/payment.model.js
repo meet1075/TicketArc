@@ -2,7 +2,7 @@ import mongoose, { Schema } from "mongoose";
 import mongooseAggregatePaginate from "mongoose-aggregate-paginate-v2";
 
 const paymentSchema = new Schema({
-    seatAvailabilityId: {  // Link to reserved seat
+    seatAvailabilityId: {  
         type: mongoose.Schema.Types.ObjectId,
         ref: "SeatAvailability",
         required: true
@@ -31,7 +31,7 @@ const paymentSchema = new Schema({
         enum: ["Not Initiated", "Processing", "Refunded"],
         default: "Not Initiated"
     },
-},{timestamps:true});
+}, { timestamps: true });
 
 paymentSchema.plugin(mongooseAggregatePaginate);
 

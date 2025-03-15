@@ -1,74 +1,77 @@
 import mongoose, { Schema } from "mongoose";
 
-const bookingSchema = new Schema(
-  {
-    showTimeId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "ShowTime",
-      required: true,
+const bookingSchema = new Schema({
+    showtimeId: {  
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "ShowTime",
+        required: true,
     },
     movieId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Movie",
-      required: true,
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Movie",
+        required: true,
     },
     theaterId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Theater",
-      required: true,
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Theater",
+        required: true,
     },
     screenId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Screen",
-      required: true,
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Screen",
+        required: true,
     },
     userId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      required: true,
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+        required: true,
     },
     seats: [
-      {
-        seatId: {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: "SeatAvailability", // Updated reference
-          required: true,
+        {
+            seatId: {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: "SeatAvailability",
+                required: true,
+            },
+            seatNumber: {  // ✅ Ensuring seatNumber is stored
+                type: String,
+                required: true,
+            },
+            seatType: {
+                type: String,
+                enum: ["Regular", "Premium"], 
+                default: "Regular",
+            },
+            price: {
+                type: Number,
+                required: true,
+            },
         },
-        seatNumber: {
-          type: String,
-          required: true,
-        },
-        seatType: {
-          type: String,
-          enum: ["Regular", "Premium"], // Update based on actual seat types
-          default: "Regular",
-        },
-        price: {
-          type: Number,
-          required: true,
-        },
-      },
     ],
-    bookingTime: {
-      type: Date,
-      default: Date.now, // Removed `required: true`
-    },
     totalAmount: {
-      type: Number,
-      required: true,
+        type: Number,
+        required: true,
+        min: 0,
+    },
+    bookingTime: {
+        type: Date,
+        default: Date.now,
     },
     bookingStatus: {
-      type: String,
-      enum: ["Pending", "Confirmed", "Cancelled"],
-      default: "Pending",
+        type: String,
+        enum: ["Pending", "Confirmed", "Cancelled"],
+        default: "Pending",
     },
     paymentStatus: {
-      type: String,
-      enum: ["Pending", "Success", "Failed"], // Added field for tracking payments
-      default: "Pending",
+        type: String,
+        enum: ["Pending", "Success", "Failed"],
+        default: "Pending",
     },
-  },
-  { timestamps: true }
-);
+    paymentId: { 
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Payment",
+        required: true,
+    },
+}, { timestamps: true });
 
 export const Booking = mongoose.model("Booking", bookingSchema);

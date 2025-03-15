@@ -5,11 +5,11 @@ import { Booking } from "../models/booking.model.js";
 import { SeatAvailability } from "../models/seatAvailability.model.js";
 import mongoose from "mongoose";
 import { Payment } from "../models/payment.model.js";
+import { ShowTime } from "../models/showtime.model.js";
 
 const createBooking = asyncHandler(async (req, res) => {
-  const { paymentId } = req.params; // Payment ID from URL params
-  const { seats, totalAmount } = req.body;
-  const userId = req.user._id; // Get userId from auth middleware
+  const { paymentId } = req.params;
+  const userId = req.user._id;
 
   if (!userId) throw new ApiErrors(401, "User not authenticated");
 
@@ -20,31 +20,48 @@ const createBooking = asyncHandler(async (req, res) => {
       throw new ApiErrors(400, "Payment is not completed. Cannot confirm booking.");
   }
 
-  // Get seat details from Payment
-  const seat = await SeatAvailability.findById(payment.seatAvailabilityId);
+  // Fetch seat details
+  const seat = await SeatAvailability.findById(payment.seatAvailabilityId)
+      .select("seatNumber isVIP showtimeId") // ✅ Ensure seatNumber is retrieved
+      .populate({
+          path: "showtimeId",
+          populate: [{ path: "movieId" }, { path: "screenId" }]
+      });
+
   if (!seat) throw new ApiErrors(404, "Seat reservation not found");
   if (!seat.isReserved) throw new ApiErrors(400, "Seat is no longer reserved");
 
-  const showTimeId = seat.showTimeId;
-  const movieId = seat.movieId;
-  const theaterId = seat.theaterId;
-  const screenId = seat.screenId;
+  console.log("Seat Details:", seat);
 
-  // Create the booking
+  const showtime = seat.showtimeId;
+  if (!showtime || !showtime.movieId || !showtime.screenId) {
+      throw new ApiErrors(400, "Showtime details are incomplete.");
+  }
+
+  const seats = [{
+      seatId: seat._id,
+      seatNumber: seat.seatNumber || "UNKNOWN", // ✅ Prevent `N/A` issue
+      seatType: seat.isVIP ? "Premium" : "Regular",
+      price: seat.isVIP ? showtime.price.Premium : showtime.price.Regular,
+  }];
+
+  console.log("Booking Seats:", seats);
+
+  // Create booking
   const booking = await Booking.create({
-      showTimeId,
-      movieId,
-      theaterId,
-      screenId,
+      showtimeId: showtime._id,
+      movieId: showtime.movieId._id,
+      theaterId: showtime.screenId.theaterId,
+      screenId: showtime.screenId._id,
       userId,
       seats,
-      totalAmount,
-      paymentId, // Now we link the booking to the existing payment
+      totalAmount: payment.amount,
+      paymentId,
       bookingStatus: "Confirmed",
       paymentStatus: "Success",
   });
 
-  // Update seat to mark as booked
+  // Update seat status
   await SeatAvailability.updateOne(
       { _id: payment.seatAvailabilityId },
       { $set: { isBooked: true, isReserved: false, reservedBy: null } }
@@ -56,6 +73,7 @@ const createBooking = asyncHandler(async (req, res) => {
 
   return res.status(201).json(new ApiResponse(201, { booking }, "Booking confirmed successfully."));
 });
+
 
 
 const getBookingDetails = asyncHandler(async (req, res) => {

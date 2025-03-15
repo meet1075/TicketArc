@@ -34,6 +34,6 @@ const showTimeSchema = new Schema({
         ref: "Screen",
         required: true
     }
-},{timestamps:true});
+}, { timestamps: true });
 
 export const ShowTime = mongoose.model("ShowTime", showTimeSchema);
