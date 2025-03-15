@@ -9,70 +9,102 @@ import { ShowTime } from "../models/showtime.model.js";
 
 const createBooking = asyncHandler(async (req, res) => {
   const { paymentId } = req.params;
-  const userId = req.user._id;
+  const userId = req.user?._id;
 
   if (!userId) throw new ApiErrors(401, "User not authenticated");
 
-  // Validate payment
+  // ✅ Validate Payment
   const payment = await Payment.findById(paymentId);
   if (!payment) throw new ApiErrors(404, "Payment not found");
   if (payment.paymentStatus !== "Completed") {
-      throw new ApiErrors(400, "Payment is not completed. Cannot confirm booking.");
+    throw new ApiErrors(400, "Payment is not completed. Cannot confirm booking.");
   }
 
-  // Fetch seat details
-  const seat = await SeatAvailability.findById(payment.seatAvailabilityId)
-      .select("seatNumber isVIP showtimeId") // ✅ Ensure seatNumber is retrieved
-      .populate({
-          path: "showtimeId",
-          populate: [{ path: "movieId" }, { path: "screenId" }]
-      });
+  // ✅ Fetch Seat Availability & Seat Data
+  const seatAvailability = await SeatAvailability.findById(payment.seatAvailabilityId)
+    .populate({
+      path: "seatId",
+      select: "seatType seatNumber",
+    })
+    .populate({
+      path: "showtimeId",
+      select: "movieId screenId price",
+      populate: [
+        { path: "movieId", select: "title" }, // Fetch movie title
+        { path: "screenId", select: "theaterId", populate: { path: "theaterId", select: "name" } }, // Populate theaterId
+      ],
+    });
 
-  if (!seat) throw new ApiErrors(404, "Seat reservation not found");
-  if (!seat.isReserved) throw new ApiErrors(400, "Seat is no longer reserved");
+  if (!seatAvailability) throw new ApiErrors(404, "Seat reservation not found");
+  if (!seatAvailability.seatId) throw new ApiErrors(404, "Seat data missing");
+  if (!seatAvailability.showtimeId) throw new ApiErrors(404, "Showtime not found");
 
-  console.log("Seat Details:", seat);
+  console.log("📌 Seat Details:", seatAvailability);
+  console.log("🔍 isReserved:", seatAvailability.isReserved);
+  console.log("⏳ Reservation Expiry:", seatAvailability.reservationExpiry);
+  console.log("🕒 Current Time:", new Date());
 
-  const showtime = seat.showtimeId;
-  if (!showtime || !showtime.movieId || !showtime.screenId) {
-      throw new ApiErrors(400, "Showtime details are incomplete.");
+  // ✅ Ensure Seat is Still Reserved
+  if (!seatAvailability.isReserved || new Date() > seatAvailability.reservationExpiry) {
+    throw new ApiErrors(400, "Seat reservation has expired.");
   }
+
+  // ✅ Fetch Correct Showtime Data
+  const showtime = seatAvailability.showtimeId;
+  if (!showtime || !showtime.price) {
+    throw new ApiErrors(400, "Showtime details are incomplete or missing.");
+  }
+
+  // ✅ Ensure Screen and Theater Data Exist
+  if (!showtime.screenId || !showtime.screenId.theaterId) {
+    throw new ApiErrors(400, "Theater information is missing from screen data.");
+  }
+
+  // ✅ Determine Correct Seat Type & Pricing
+  const correctSeatType = seatAvailability.seatId.seatType; // 🎯 Get seat type
+  const seatPrice = showtime.price[correctSeatType] || 0; // 🎯 Get price from Showtime
+
+  if (seatPrice <= 0) throw new ApiErrors(400, "Invalid seat price");
+
+  console.log("🎟️ Seat Type:", correctSeatType);
+  console.log("💰 Correct Price:", seatPrice);
 
   const seats = [{
-      seatId: seat._id,
-      seatNumber: seat.seatNumber || "UNKNOWN", // ✅ Prevent `N/A` issue
-      seatType: seat.isVIP ? "Premium" : "Regular",
-      price: seat.isVIP ? showtime.price.Premium : showtime.price.Regular,
+    seatId: seatAvailability.seatId._id,
+    seatNumber: seatAvailability.seatId.seatNumber || "UNKNOWN",
+    seatType: correctSeatType, // ✅ Correct seat type
+    price: seatPrice, // ✅ Correct price
   }];
 
-  console.log("Booking Seats:", seats);
+  console.log("🎟️ Booking Seats:", seats);
 
-  // Create booking
+  // ✅ Create Booking
   const booking = await Booking.create({
-      showtimeId: showtime._id,
-      movieId: showtime.movieId._id,
-      theaterId: showtime.screenId.theaterId,
-      screenId: showtime.screenId._id,
-      userId,
-      seats,
-      totalAmount: payment.amount,
-      paymentId,
-      bookingStatus: "Confirmed",
-      paymentStatus: "Success",
+    showtimeId: showtime._id,
+    movieId: showtime.movieId._id,
+    theaterId: showtime.screenId.theaterId._id, // ✅ Ensure this exists
+    screenId: showtime.screenId._id,
+    userId,
+    seats,
+    totalAmount: seatPrice, // ✅ Ensure totalAmount matches payment amount
+    paymentId,
+    bookingStatus: "Confirmed",
+    paymentStatus: "Success",
   });
 
-  // Update seat status
+  // ✅ Update Seat Status
   await SeatAvailability.updateOne(
-      { _id: payment.seatAvailabilityId },
-      { $set: { isBooked: true, isReserved: false, reservedBy: null } }
+    { _id: payment.seatAvailabilityId },
+    { $set: { isBooked: true, isReserved: false, reservedBy: null, reservationExpiry: null } }
   );
 
-  // Attach bookingId to payment
+  // ✅ Attach bookingId to Payment
   payment.bookingId = booking._id;
   await payment.save();
 
   return res.status(201).json(new ApiResponse(201, { booking }, "Booking confirmed successfully."));
 });
+
 
 
 

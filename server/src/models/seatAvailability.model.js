@@ -9,7 +9,7 @@ const seatAvailabilitySchema = new Schema({
     seatNumber: { 
         type: String, 
         required: true 
-    },  // ✅ Ensuring seatNumber is always required
+    }, 
     showtimeId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "ShowTime",

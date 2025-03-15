@@ -8,72 +8,57 @@ import { v4 as uuidv4 } from "uuid";
 import { SeatAvailability } from "../models/seatAvailability.model.js";
 import { ShowTime } from "../models/showtime.model.js";
 const createPayment = asyncHandler(async (req, res) => {
-    const { seatAvailabilityId, showtimeId, paymentMethod, cardNumber, expiryDate, upiId } = req.body;
+    const { seatAvailabilityId, paymentMethod, transactionId } = req.body; // Accept transactionId if provided
+    const userId = req.user?._id;
 
-    if (!seatAvailabilityId || !Array.isArray(seatAvailabilityId) || seatAvailabilityId.length === 0) {
-        throw new ApiErrors(400, "At least one seat must be selected for payment.");
+    if (!userId) throw new ApiErrors(401, "User not authenticated");
+    if (!seatAvailabilityId) throw new ApiErrors(400, "Missing seatAvailabilityId");
+
+    // ✅ Fetch Seat Availability & Populate Seat Type
+    const seatAvailability = await SeatAvailability.findById(seatAvailabilityId)
+      .populate({
+        path: "seatId",
+        select: "seatType seatNumber",
+      })
+      .populate({
+        path: "showtimeId",
+        select: "movieId price",
+      });
+
+    if (!seatAvailability) throw new ApiErrors(404, "Seat Availability not found");
+    if (!seatAvailability.seatId) throw new ApiErrors(404, "Seat data not found");
+    if (!seatAvailability.showtimeId) throw new ApiErrors(404, "Showtime not found");
+
+    if (seatAvailability.isBooked) throw new ApiErrors(400, "Seat is already booked");
+    if (!seatAvailability.isReserved || seatAvailability.reservedBy?.toString() !== userId.toString()) {
+      throw new ApiErrors(400, "Seat is not reserved by you or has expired");
     }
 
-    if (!showtimeId || !mongoose.Types.ObjectId.isValid(showtimeId)) {
-        throw new ApiErrors(400, "Invalid or missing showtimeId.");
-    }
+    // ✅ Get Correct Seat Type & Price
+    const correctSeatType = seatAvailability.seatId.seatType; // 🎯 Get seat type from Seat model
+    const seatPrice = seatAvailability.showtimeId.price[correctSeatType] || 0;
 
-    // Fetch showtime and seats in parallel
-    const [showtime, seats] = await Promise.all([
-        ShowTime.findById(showtimeId),
-        SeatAvailability.find({ _id: { $in: seatAvailabilityId }, isReserved: true }).select("seatNumber isVIP showtimeId")
-    ]);
+    if (seatPrice <= 0) throw new ApiErrors(400, "Invalid seat price");
 
-    if (!showtime) throw new ApiErrors(404, "Showtime not found.");
-    if (seats.length !== seatAvailabilityId.length) throw new ApiErrors(400, "One or more selected seats are not reserved.");
+    console.log("🎟️ Seat Type:", correctSeatType);
+    console.log("💰 Seat Price:", seatPrice);
 
-    // Ensure all seats belong to the same showtime
-    if (seats.some(seat => seat.showtimeId.toString() !== showtimeId)) {
-        throw new ApiErrors(400, "Selected seats do not match the provided showtime.");
-    }
+    // ✅ Ensure transactionId is provided (generate if missing)
+    const paymentTransactionId = transactionId || uuidv4(); // Generate a unique ID if not provided
 
-    // Calculate total amount
-    let totalAmount = seats.reduce((sum, seat) => sum + (seat.isVIP ? showtime.price.Premium : showtime.price.Regular), 0);
-
-    // Validate payment method
-    const allowedMethods = ["Credit Card", "Debit Card", "UPI"];
-    if (!paymentMethod || !allowedMethods.includes(paymentMethod)) {
-        throw new ApiErrors(400, "Invalid payment method.");
-    }
-
-    let paymentDetails = {};
-    if (["Credit Card", "Debit Card"].includes(paymentMethod)) {
-        if (!cardNumber || !expiryDate) throw new ApiErrors(400, "Card details are required.");
-        paymentDetails.cardNumber = `**** **** **** ${cardNumber.slice(-4)}`;
-        paymentDetails.expiryDate = expiryDate;
-    } else if (paymentMethod === "UPI") {
-        if (!upiId || !upiId.includes("@")) throw new ApiErrors(400, "Invalid UPI ID.");
-        paymentDetails.upiId = upiId;
-    }
-
-    // Generate Unique Transaction ID
-    let transactionId = uuidv4();
-    while (await Payment.exists({ transactionId })) {
-        transactionId = uuidv4();
-    }
-
-    // Create Payment
+    // ✅ Create Payment
     const payment = await Payment.create({
-        seatAvailabilityId, // Change to seatAvailabilityIds if storing multiple seats
-        amount: totalAmount,
-        paymentMethod,
-        paymentStatus: "Completed",
-        transactionId,
-        showtimeId,
-        ...paymentDetails,
+      userId,
+      amount: seatPrice,
+      paymentMethod,
+      transactionId: paymentTransactionId, // ✅ Ensure transactionId is included
+      paymentStatus: "Completed", // Assuming instant payment success
+      seatAvailabilityId: seatAvailability._id,
     });
 
-    return res.status(200).json(new ApiResponse(200, payment, "Payment created successfully"));
+    return res.status(201).json(new ApiResponse(201, { payment }, "Payment processed successfully."));
 });
-
-
-
-
+  
 
 const getPaymentByBookingId = asyncHandler(async (req, res) => {
     const { bookingId } = req.params;

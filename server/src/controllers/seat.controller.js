@@ -125,31 +125,50 @@ const getSeatsByScreenId = asyncHandler(async (req, res) => {
 });
 
 const createSeatAvailabilityForShowtime = asyncHandler(async (req, res) => {
-  const { showtimeId, screenId } = req.params;
+    const { showtimeId, screenId } = req.params;
 
-  if (!mongoose.isValidObjectId(showtimeId) || !mongoose.isValidObjectId(screenId)) {
-      throw new ApiErrors(400, "Invalid showtimeId or screenId");
-  }
+    if (!mongoose.isValidObjectId(showtimeId) || !mongoose.isValidObjectId(screenId)) {
+        throw new ApiErrors(400, "Invalid showtimeId or screenId");
+    }
 
-  const seats = await Seat.find({ screenId });
+    const seats = await Seat.find({ screenId });
 
-  if (!seats.length) {
-      throw new ApiErrors(404, "No seats found for this screen");
-  }
+    if (!seats.length) {
+        throw new ApiErrors(404, "No seats found for this screen");
+    }
 
-  
-  const seatAvailability = seats.map(seat => ({
-      seatId: seat._id,
-      showtimeId,
-      isAvailable: true
-  }));
+    const seatAvailability = seats.map(seat => ({
+        seatId: seat._id,
+        seatNumber: seat.seatNumber, // ✅ Ensure seatNumber is included
+        showtimeId,
+        isAvailable: true
+    }));
 
-  await SeatAvailability.insertMany(seatAvailability);
+    await SeatAvailability.insertMany(seatAvailability);
 
-  return res.status(201).json({
-      message: `Seat availability created for Showtime ${showtimeId}`,
-      totalSeats: seatAvailability.length
-  });
+    return res.status(201).json({
+        message: `Seat availability created for Showtime ${showtimeId}`,
+        totalSeats: seatAvailability.length
+    });
+});
+
+const removeSeatAvailabilityForShowtime = asyncHandler(async (req, res) => {
+    const { showtimeId } = req.params;
+
+    if (!mongoose.isValidObjectId(showtimeId)) {
+        throw new ApiErrors(400, "Invalid showtimeId");
+    }
+
+    // Delete all seat availability records for the given showtime
+    const result = await SeatAvailability.deleteMany({ showtimeId });
+
+    if (result.deletedCount === 0) {
+        throw new ApiErrors(404, "No seat availability found for this showtime");
+    }
+
+    return res.status(200).json({
+        message: `Deleted ${result.deletedCount} seat availability records for Showtime ${showtimeId}`
+    });
 });
 
 const checkSeatAvailability = asyncHandler(async (req, res) => {
@@ -179,12 +198,12 @@ const confirmSeatBooking = asyncHandler(async (req, res) => {
         throw new ApiErrors(401, "User not authenticated");
     }
 
-    // Fetch the seat with `seatNumber` explicitly selected
-    const seat = await SeatAvailability.findById(seatAvailabilityId).select("seatNumber isAvailable isReserved reservedBy");
+    // Fetch the seat with `seatNumber` and necessary fields
+    const seat = await SeatAvailability.findById(seatAvailabilityId).select("seatNumber isAvailable isReserved reservedBy reservationExpiry");
 
-    if (!seat) throw new ApiErrors(404, "Seat not found");
-    if (!seat.isAvailable) throw new ApiErrors(400, "Seat is already booked");
-    if (seat.isReserved) throw new ApiErrors(400, "Seat is already reserved by another user");
+    if (!seat) {throw new ApiErrors(404, "Seat not found");}
+    if (!seat.isAvailable) { throw new ApiErrors(400, "Seat is already booked");}
+    if (seat.isReserved && new Date() < seat.reservationExpiry) {throw new ApiErrors(400, "Seat is already reserved by another user");}
 
     // Reserve the seat for this user (expires in 5 mins)
     const updatedSeat = await SeatAvailability.findByIdAndUpdate(
@@ -198,7 +217,11 @@ const confirmSeatBooking = asyncHandler(async (req, res) => {
         { new: true, runValidators: true } // Ensures updated document is returned
     );
 
-    return res.status(200).json(new ApiResponse(200, updatedSeat, "Seat reserved successfully for 5 minutes"));
+    console.log("Updated Seat After Reservation:", updatedSeat); // ✅ Debugging
+
+    return res
+    .status(200)
+    .json(new ApiResponse(200, updatedSeat, "Seat reserved successfully for 5 minutes"));
 });
 
 
@@ -238,6 +261,7 @@ export {
     getSeatById,
     getSeatsByScreenId,
     createSeatAvailabilityForShowtime,
+    removeSeatAvailabilityForShowtime,
     checkSeatAvailability,
     confirmSeatBooking,
     cancelSeatBooking
