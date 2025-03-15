@@ -105,42 +105,89 @@ const createBooking = asyncHandler(async (req, res) => {
   return res.status(201).json(new ApiResponse(201, { booking }, "Booking confirmed successfully."));
 });
 
-
-
-
 const getBookingDetails = asyncHandler(async (req, res) => {
   const { bookingId } = req.params;
-  const booking = await Booking.findById(bookingId).populate("showTimeId movieId theaterId screenId seats.seatId");
-  
+
+  const booking = await Booking.findById(bookingId)
+    .populate({
+      path: "showtimeId",
+      select: "showDateTime", // ✅ Only fetch showtime date & time
+    })
+    .populate({
+      path: "movieId",
+      select: "title", // ✅ Only fetch movie title
+    })
+    .populate({
+      path: "screenId",
+      select: "screenNumber", // ✅ Only fetch screen number
+    })
+    .populate({
+      path: "seats.seatId",
+      select: "seatNumber seatType", // ✅ Only fetch seat details
+    })
+    .select("seats totalAmount"); // ✅ Limit response to only required fields
+
   if (!booking) {
     throw new ApiErrors(404, "Booking not found.");
-
   }
 
+  // ✅ Format the response with only necessary details
+  const formattedBooking = {
+    showtime: booking.showtimeId?.showDateTime || "N/A",
+    movie: booking.movieId?.title || "N/A",
+    screenNumber: booking.screenId?.screenNumber || "N/A",
+    seats: booking.seats.map(seat => ({
+      seatNumber: seat.seatNumber || "N/A",
+      seatType: seat.seatType || "N/A",
+      price: seat.price || 0,
+    })),
+    totalAmount: booking.totalAmount || 0,
+  };
+
   return res
-  .status(200)
-  .json(new ApiResponse(200, { booking }, "Booking fetched successfully."));
+    .status(200)
+    .json(new ApiResponse(200, { booking: formattedBooking }, "Booking fetched successfully."));
 });
+
 
 const cancelBooking = asyncHandler(async (req, res) => {
   const { bookingId } = req.params;
-  const booking = await Booking.findById(bookingId);
-  
-  if (!booking) throw new ApiErrors(404, "Booking not found.");
-  if (booking.bookingStatus !== "Confirmed"){
-     throw new ApiErrors(400, "Only confirmed bookings can be cancelled.");
-  }
-  const seatIds = booking.seats.map((seat) => seat.seatId);
-  await SeatAvailability.updateMany({ _id: { $in: seatIds } }, { $set: { isBooked: false } });
 
+  // ✅ Find booking
+  const booking = await Booking.findById(bookingId).populate("seats.seatId");
+
+  if (!booking) throw new ApiErrors(404, "Booking not found.");
+  if (booking.bookingStatus !== "Confirmed") {
+    throw new ApiErrors(400, "Only confirmed bookings can be cancelled.");
+  }
+
+  // ✅ Check if seatId exists (Prevent empty seat array)
+  const seatIds = booking.seats
+    .map((seat) => seat.seatId?._id) // Extract valid seat IDs
+    .filter((id) => id); // Remove null values
+
+  if (seatIds.length > 0) {
+    await SeatAvailability.updateMany(
+      { _id: { $in: seatIds } },
+      { $set: { isBooked: false, isReserved: false, reservedBy: null, reservationExpiry: null } }
+    );
+  }
+
+  // ✅ Ensure valid `paymentStatus` enum value
   booking.bookingStatus = "Cancelled";
-  booking.paymentStatus = "Refunded";
+  if (booking.paymentStatus === "Success") {
+    booking.paymentStatus = "RefundInitiated"; // Change to a valid enum value
+  }
+
   await booking.save();
 
-  return res
-  .status(200)
-  .json(new ApiResponse(200, { booking }, "Booking cancelled successfully and seats released."));
+  return res.status(200).json(new ApiResponse(
+    200,
+    { booking },
+    "Booking cancelled successfully and seats released."
+  ));
 });
+
 
 const getAllBookingsOfShowTime = asyncHandler(async (req, res) => {
   const { showTimeId } = req.params;
