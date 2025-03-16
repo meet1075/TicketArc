@@ -6,6 +6,10 @@ const seatAvailabilitySchema = new Schema({
         ref: "Seat",
         required: true
     },
+    seatNumber: { 
+        type: String, 
+        required: true 
+    }, 
     showtimeId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "ShowTime",
@@ -15,7 +19,7 @@ const seatAvailabilitySchema = new Schema({
         type: Boolean,
         default: true
     },
-    isReserved: {  // New field to track reservations
+    isReserved: {
         type: Boolean,
         default: false
     },
@@ -24,7 +28,11 @@ const seatAvailabilitySchema = new Schema({
         ref: "User",
         default: null
     },
-    reservationExpiry: { 
+    isBooked: {
+        type: Boolean,
+        default: false
+    },
+    reservationExpiry: {
         type: Date,
         default: null
     }
