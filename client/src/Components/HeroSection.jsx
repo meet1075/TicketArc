@@ -69,7 +69,7 @@ const HeroSection = () => {
           </div>
           <div className="relative container mx-auto px-8 md:px-12 h-full flex items-center">
             <div className="max-w-2xl text-white">
-              <h1 className="text-[clamp(1.5rem,5vw,3rem)] font-bold mb-4 leading-tight">
+              <h1 className="text-[clamp(1.5rem,5vw,3rem)] font-bold mb-6 leading-tight">
                 {slide.title}
               </h1>
               <p className="text-[clamp(1rem,3vw,1.25rem)] mb-8 leading-relaxed">
@@ -87,18 +87,18 @@ const HeroSection = () => {
         </div>
       ))}
 
-      {/* Navigation Arrows - Adjusted positioning and z-index */}
-      <div className="absolute inset-x-0 top-1/2 transform -translate-y-1/2 flex justify-between items-center px-4 md:px-8 z-20 pointer-events-none">
+      {/* Navigation Arrows */}
+      <div className="absolute inset-x-0 top-1/2 transform -translate-y-1/2 container mx-auto px-4 flex justify-between items-center pointer-events-none">
         <button 
           onClick={prevSlide}
-          className="bg-black/50 hover:bg-black/75 text-white p-3 rounded-full transition-colors pointer-events-auto transform hover:scale-110"
+          className="bg-black/50 hover:bg-black/75 text-white p-4 rounded-full transition-colors pointer-events-auto transform hover:scale-110"
           aria-label="Previous slide"
         >
           <ChevronLeft size={24} />
         </button>
         <button 
           onClick={nextSlide}
-          className="bg-black/50 hover:bg-black/75 text-white p-3 rounded-full transition-colors pointer-events-auto transform hover:scale-110"
+          className="bg-black/50 hover:bg-black/75 text-white p-4 rounded-full transition-colors pointer-events-auto transform hover:scale-110"
           aria-label="Next slide"
         >
           <ChevronRight size={24} />
@@ -106,7 +106,7 @@ const HeroSection = () => {
       </div>
 
       {/* Slide Indicators */}
-      <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex space-x-2 z-20">
+      <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex space-x-2">
         {heroSlides.map((_, index) => (
           <button
             key={index}
