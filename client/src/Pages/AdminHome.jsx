@@ -734,8 +734,15 @@ function AdminHome() {
   const [showModal, setShowModal] = useState(false);
   const [modalType, setModalType] = useState('movie');
   const [editingItem, setEditingItem] = useState(null);
+  const [refreshKey, setRefreshKey] = useState(0); // Added refreshKey state
 
   const handleLogout = () => navigate('/');
+
+  const handleModalClose = () => { // Added handleModalClose function
+    setShowModal(false);
+    setEditingItem(null);
+    setRefreshKey(prev => prev + 1); // Increment to trigger re-fetch
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -775,14 +782,29 @@ function AdminHome() {
           ))}
         </div>
 
-        {activeTab === 'movies' && <MoviesTab setModalType={setModalType} setShowModal={setShowModal} setEditingItem={setEditingItem} />}
-        {activeTab === 'theaters' && <TheatersTab setModalType={setModalType} setShowModal={setShowModal} setEditingItem={setEditingItem} />}
+        {/* Removed duplicate unconditional renders */}
+        {activeTab === 'movies' && (
+          <MoviesTab 
+            refreshKey={refreshKey} 
+            setModalType={setModalType} 
+            setShowModal={setShowModal} 
+            setEditingItem={setEditingItem} 
+          />
+        )}
+        {activeTab === 'theaters' && (
+          <TheatersTab 
+            refreshKey={refreshKey} 
+            setModalType={setModalType} 
+            setShowModal={setShowModal} 
+            setEditingItem={setEditingItem} 
+          />
+        )}
         {activeTab === 'analytics' && <AnalyticsTab />}
         {activeTab === 'settings' && <SettingsTab />}
 
         <AdminModal 
           showModal={showModal}
-          setShowModal={setShowModal}
+          setShowModal={handleModalClose} // Use the new handler
           modalType={modalType}
           editingItem={editingItem}
           setEditingItem={setEditingItem}
