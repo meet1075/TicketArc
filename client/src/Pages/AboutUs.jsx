@@ -19,8 +19,8 @@ const developers = [
     name: "Meet Soni",
     role: "Backend Developer",
     email: "23dce115@charusat.edu.in",
-    linkedin: "",
-    github: "",
+    linkedin: "https://www.linkedin.com/in/meet-soni-bab76b2b1/",
+    github: "https://github.com/meet1075",
     image: MeetImg
   },
   {
@@ -28,7 +28,7 @@ const developers = [
     name: "Tirth Sorathia",
     role: "Frontend Developer",
     email: "23dce116@charusat.edu.in",
-    linkedin: "www.linkedin.com/in/tirth-sorathia-4b0078288",
+    linkedin: "https://www.linkedin.com/in/tirth-sorathia-4b0078288",
     github: "https://github.com/tirth2404",
     image: TirthImg
   },
