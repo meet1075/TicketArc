@@ -1,23 +1,18 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useContext } from 'react';
 import { User, Ticket, LogIn, Menu, X, LogOut, ChevronDown, Bell, Settings } from 'lucide-react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { AuthContext } from '../context/AuthContext'; // Import AuthContext
 import logo from "../assets/image/logo.png";
 
 const Navbar = () => {
+  const { isLoggedIn, user, logout } = useContext(AuthContext); // Use AuthContext
   const navigate = useNavigate();
   const location = useLocation();
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [notifications, setNotifications] = useState(3);
   const dropdownRef = useRef(null);
-
-  const user = {
-    name: "John Doe",
-    photo: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80",
-    points: 750
-  };
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -25,7 +20,6 @@ const Navbar = () => {
         setDropdownOpen(false);
       }
     };
-
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
@@ -36,34 +30,16 @@ const Navbar = () => {
   }, [location]);
 
   const handleLogout = () => {
-    setIsLoggedIn(false);
+    logout();
     setDropdownOpen(false);
     navigate('/');
   };
 
-  const handleLogin = () => {
-    navigate('/login');
-  };
-
-  const toggleLoginStatus = () => {
-    setIsLoggedIn(!isLoggedIn);
-  };
+  const handleLogin = () => navigate('/login');
 
   const dropdownVariants = {
-    hidden: { 
-      opacity: 0,
-      y: -10,
-      transition: {
-        duration: 0.2
-      }
-    },
-    visible: { 
-      opacity: 1,
-      y: 0,
-      transition: {
-        duration: 0.2
-      }
-    }
+    hidden: { opacity: 0, y: -10, transition: { duration: 0.2 } },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.2 } }
   };
 
   return (
@@ -77,13 +53,6 @@ const Navbar = () => {
 
           <div className="hidden md:flex items-center space-x-8">
             <Link to="/" className="text-sm md:text-base hover:text-red-500 transition-colors">Home</Link>
-            
-            <button 
-              onClick={toggleLoginStatus}
-              className="text-xs px-2 py-1 bg-gray-700 rounded"
-            >
-              Toggle Login (Demo)
-            </button>
 
             {isLoggedIn ? (
               <div className="relative" ref={dropdownRef}>
@@ -102,11 +71,11 @@ const Navbar = () => {
                     className="flex items-center space-x-2 hover:text-red-500 transition-colors"
                   >
                     <img 
-                      src={user.photo} 
-                      alt={user.name}
+                      src={user?.photo || "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"} 
+                      alt={user?.name || "User"}
                       className="w-8 h-8 rounded-full border-2 border-transparent hover:border-red-500 transition-colors"
                     />
-                    <span className="text-sm md:text-base">Hello, {user.name}</span>
+                    <span className="text-sm md:text-base">Hello, {user?.fullName || "User"}</span>
                     <ChevronDown size={16} className={`transform transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} />
                   </button>
                 </div>
@@ -122,34 +91,21 @@ const Navbar = () => {
                     >
                       <div className="px-4 py-2 border-b border-gray-100">
                         <p className="text-sm text-gray-500">Loyalty Points</p>
-                        <p className="font-bold text-red-500">{user.points} points</p>
+                        <p className="font-bold text-red-500">{user?.points || 0} points</p>
                       </div>
-                      
-                      <Link 
-                        to="/profile" 
-                        className="flex items-center px-4 py-2 hover:bg-gray-100 transition-colors"
-                      >
+                      <Link to="/profile" className="flex items-center px-4 py-2 hover:bg-gray-100 transition-colors">
                         <User size={16} className="mr-2" />
                         <span>Profile</span>
                       </Link>
-                      <Link 
-                        to="/bookings" 
-                        className="flex items-center px-4 py-2 hover:bg-gray-100 transition-colors"
-                      >
+                      <Link to="/bookings" className="flex items-center px-4 py-2 hover:bg-gray-100 transition-colors">
                         <Ticket size={16} className="mr-2" />
                         <span>Bookings</span>
                       </Link>
-                      <Link 
-                        to="/settings" 
-                        className="flex items-center px-4 py-2 hover:bg-gray-100 transition-colors"
-                      >
+                      <Link to="/settings" className="flex items-center px-4 py-2 hover:bg-gray-100 transition-colors">
                         <Settings size={16} className="mr-2" />
                         <span>Settings</span>
                       </Link>
-                      <button 
-                        onClick={handleLogout}
-                        className="flex items-center w-full px-4 py-2 hover:bg-gray-100 transition-colors"
-                      >
+                      <button onClick={handleLogout} className="flex items-center w-full px-4 py-2 hover:bg-gray-100 transition-colors">
                         <LogOut size={16} className="mr-2" />
                         <span>Logout</span>
                       </button>
@@ -186,23 +142,18 @@ const Navbar = () => {
               className="md:hidden overflow-hidden"
             >
               <div className="py-4 space-y-4">
-                <Link 
-                  to="/" 
-                  className="block hover:text-red-500 transition-colors text-sm"
-                >
-                  Home
-                </Link>
+                <Link to="/" className="block hover:text-red-500 transition-colors text-sm">Home</Link>
                 
                 {isLoggedIn ? (
                   <>
                     <div className="flex items-center justify-between py-2 border-t border-gray-700">
                       <div className="flex items-center space-x-2">
                         <img 
-                          src={user.photo} 
-                          alt={user.name}
+                          src={user?.photo || "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"} 
+                          alt={user?.name || "User"}
                           className="w-8 h-8 rounded-full"
                         />
-                        <span className="text-sm">{user.name}</span>
+                        <span className="text-sm">{user?.fullName || "User"}</span>
                       </div>
                       {notifications > 0 && (
                         <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full">
@@ -210,24 +161,9 @@ const Navbar = () => {
                         </span>
                       )}
                     </div>
-                    <Link 
-                      to="/profile" 
-                      className="block hover:text-red-500 transition-colors text-sm"
-                    >
-                      Profile
-                    </Link>
-                    <Link 
-                      to="/bookings" 
-                      className="block hover:text-red-500 transition-colors text-sm"
-                    >
-                      Bookings
-                    </Link>
-                    <Link 
-                      to="/settings" 
-                      className="block hover:text-red-500 transition-colors text-sm"
-                    >
-                      Settings
-                    </Link>
+                    <Link to="/profile" className="block hover:text-red-500 transition-colors text-sm">Profile</Link>
+                    <Link to="/bookings" className="block hover:text-red-500 transition-colors text-sm">Bookings</Link>
+                    <Link to="/settings" className="block hover:text-red-500 transition-colors text-sm">Settings</Link>
                     <button 
                       onClick={() => {
                         handleLogout();
@@ -257,6 +193,6 @@ const Navbar = () => {
       </div>
     </nav>
   );
-}
+};
 
 export default Navbar;

@@ -1,52 +1,46 @@
-import React, { useState , useEffect} from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Film } from 'lucide-react';
-import axios from "axios";
-import logo from "../assets/image/logo.png"
+import { AuthContext } from '../context/AuthContext';
+import logo from "../assets/image/logo.png";
 
 function Login() {
-  useEffect(() => {
-      window.scrollTo(0, 0);
-    }, []);
+  const { login } = useContext(AuthContext);
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
-    email: '',
+    identifier: '',
     password: ''
   });
   const [error, setError] = useState('');
 
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-const login={
-  email:formData.email,
-  password: formData.password
-};
+    setError('');
 
+    const credentials = {
+      [formData.identifier.includes('@') ? 'email' : 'userName']: formData.identifier,
+      password: formData.password
+    };
 
-    // Add your login logic here
-    // For now, let's just simulate a successful login
     try {
-      console.log(import.meta.env.VITE_BACKEND_URL);
-
-      const response= await axios.post(`${import.meta.env.VITE_BACKEND_URL}/user/login`,login)
-      if (response.status===200) {
-        navigate('/');
-      } else {
-        setError('Please fill in all fields');
-      }
+      await login(credentials); // Handles redirect
     } catch (error) {
       console.error("Login Error:", error.response ? error.response.data : error.message);
-      setError(error.response?.data?.message || "Incorrect Email / Password, please enter correct details again.");
-   }
-   
+      setError(error.response?.data?.message || "Incorrect Username/Email or Password, please try again.");
+    }
   };
 
+  // ... (JSX unchanged)
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         <div>
           <div className="flex justify-center pt-7">
-          <img src = {logo} className='mt-7 h-[100px] w-15'></img>
+            <img src={logo} className="mt-7 h-[100px] w-15" alt="Logo" />
           </div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
             Sign in to your account
@@ -68,16 +62,16 @@ const login={
           
           <div className="rounded-md shadow-sm -space-y-px">
             <div>
-              <label htmlFor="email" className="sr-only">Email address</label>
+              <label htmlFor="identifier" className="sr-only">Username or Email</label>
               <input
-                id="email"
-                name="email"
-                type="email"
+                id="identifier"
+                name="identifier"
+                type="text"
                 required
                 className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-red-500 focus:border-red-500 focus:z-10 sm:text-sm"
-                placeholder="Email address"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                placeholder="Username or Email"
+                value={formData.identifier}
+                onChange={(e) => setFormData({ ...formData, identifier: e.target.value })}
               />
             </div>
             <div>
@@ -107,7 +101,6 @@ const login={
                 Remember me
               </label>
             </div>
-
             <div className="text-sm">
               <a href="#" className="font-medium text-red-600 hover:text-red-500">
                 Forgot your password?
