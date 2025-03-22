@@ -1,6 +1,7 @@
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { ThemeProvider } from './context/ThemeContext';
+import { AuthProvider } from './context/AuthContext'; // Import AuthProvider
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import Home from './pages/Home';
@@ -18,32 +19,31 @@ import TermsConditions from './pages/TermsConditions';
 import Settings from './pages/Settings';
 
 function App() {
-  // This would come from your auth context in a real app
-  const isAdmin = false;
-
   return (
     <ThemeProvider>
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col transition-colors duration-200">
-        {!isAdmin && <Navbar />}
-        <div className="flex-grow">
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="/movie/:id" element={<MovieDetails />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/about" element={<AboutUs />} />
-            <Route path="/contact" element={<Contact />} />
-            <Route path="/theater-seating/:movieId/:cinemaId/:showtime" element={<TheaterSeating />} />
-            <Route path="/bookings" element={<Bookings />} />
-            <Route path="/admin" element={<AdminHome />} />
-            <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-            <Route path="/terms-conditions" element={<TermsConditions />} />
-            <Route path="/settings" element={<Settings />} />
-          </Routes>
+      <AuthProvider> {/* Wrap with AuthProvider */}
+        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col transition-colors duration-200">
+          <Navbar /> {/* Navbar always shows, auth will handle login/logout */}
+          <div className="flex-grow">
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+              <Route path="/movie/:id" element={<MovieDetails />} />
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/about" element={<AboutUs />} />
+              <Route path="/contact" element={<Contact />} />
+              <Route path="/theater-seating/:movieId/:cinemaId/:showtime" element={<TheaterSeating />} />
+              <Route path="/bookings" element={<Bookings />} />
+              <Route path="/admin" element={<AdminHome />} />
+              <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+              <Route path="/terms-conditions" element={<TermsConditions />} />
+              <Route path="/settings" element={<Settings />} />
+            </Routes>
+          </div>
+          <Footer /> {/* Footer always shows */}
         </div>
-        {!isAdmin && <Footer />}
-      </div>
+      </AuthProvider>
     </ThemeProvider>
   );
 }
