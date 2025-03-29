@@ -27,8 +27,8 @@ import { User } from "../models/user.model.js";
 
 export const verifyJWT = async (req, res, next) => {
   try {
-    console.log("Cookies Received:", req.cookies);
-    console.log("Authorization Header:", req.header("authorization"));
+    console.log("🔹 Cookies Received:", req.cookies);
+    console.log("🔹 Authorization Header:", req.header("authorization"));
 
     const token = req.cookies?.accessToken || req.header("authorization")?.replace("Bearer ", "");
 
@@ -43,12 +43,14 @@ export const verifyJWT = async (req, res, next) => {
       return res.status(401).json({ message: "Unauthorized: User not found" });
     }
 
-    req.user = user; // Attach user to request object
+    req.user = user;
     next();
   } catch (error) {
+    console.error("🔴 JWT Verification Failed:", error.message);
     return res.status(401).json({ message: error?.message || "Invalid access token" });
   }
 };
+
 
 
 // ✅ Admin Role Middleware (verifyAdmin)

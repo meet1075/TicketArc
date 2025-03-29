@@ -116,7 +116,7 @@ function MoviesTab({ setModalType, setShowModal, setEditingItem, refreshKey }) {
     setError(null);
     try {
       const token = localStorage.getItem('token'); // Adjust based on your auth setup
-      const response = await axios.get('http://localhost:3000/api/v1/movie/getAllMovie', {
+      const response = await axios.get('http://localhost:8000/api/v1/movie/getAllMovie', {
         headers: { Authorization: `Bearer ${token}` },
         withCredentials: true
       });
