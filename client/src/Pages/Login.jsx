@@ -145,12 +145,12 @@ function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-
+  
     const credentials = {
       [formData.identifier.includes('@') ? 'email' : 'userName']: formData.identifier,
       password: formData.password
     };
-
+  
     try {
 <<<<<<< HEAD
       await login(credentials);
@@ -158,19 +158,27 @@ function Login() {
       const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/user/login`, credentials, {
         withCredentials: true
       });
-      
-
-      if (response.data?.token) {
-        localStorage.setItem("accessToken", response.data.token);
+  
+      console.log("🔹 Login Response:", response.data);
+      console.log("🔹 Cookies in Document:", document.cookie);
+  
+      if (response.data?.accessToken) {
+        localStorage.setItem("accessToken", response.data.accessToken);
       }
+<<<<<<< HEAD
 
       navigate("/dashboard"); // Redirect after successful login
 >>>>>>> b6e3e2f27a7ca3e03541118b6a32b6ed975ec277
+=======
+  
+      navigate("/");
+>>>>>>> d8bac6f2d55e3c8ff231608a32525d3f27509462
     } catch (error) {
-      console.error("Login Error:", error.response ? error.response.data : error.message);
+      console.error("🔴 Login Error:", error.response ? error.response.data : error.message);
       setError(error.response?.data?.message || "Incorrect Username/Email or Password, please try again.");
     }
   };
+  
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -200,8 +208,11 @@ function Login() {
               {error}
             </div>
           )}
+<<<<<<< HEAD
 
 >>>>>>> b6e3e2f27a7ca3e03541118b6a32b6ed975ec277
+=======
+>>>>>>> d8bac6f2d55e3c8ff231608a32525d3f27509462
           <div className="rounded-md shadow-sm -space-y-px">
             <input
               id="identifier"

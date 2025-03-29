@@ -5,7 +5,7 @@ import { AuthProvider } from './context/AuthContext'; // Import AuthProvider
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import Home from './pages/Home';
-import Login from './pages/Login';
+import Login from './pages/Login.jsx';
 import Register from './pages/Register';
 import MovieDetails from './pages/MovieDetails';
 import Profile from './pages/Profile';

@@ -96,20 +96,32 @@ const login = asyncHandler(async (req, res, next) => {
 
     const options = {
         httpOnly: true,
-        secure: true
+        secure: process.env.NODE_ENV === "production",
+        
     };
-
     return res
     .status(200)
-    .cookie("accessToken",accessToken,options)
-    .cookie("refreshToken",refreshToken,options)
-    .json(new ApiResponse(200,
-       {
-           user:loggedInUser,accessToken,refreshToken
-       },
-       "user logged in successfully"
-       ))
-    next(); 
+    .cookie("accessToken", accessToken, options)
+    .cookie("refreshToken", refreshToken, options)
+    .json({ 
+        success: true,
+        user: loggedInUser,
+        accessToken, // Send token in response (for debugging)
+        refreshToken
+    });
+
+
+    // return res
+    // .status(200)
+    // .cookie("accessToken",accessToken,options)
+    // .cookie("refreshToken",refreshToken,options)
+    // .json(new ApiResponse(200,
+    //    {
+    //        user:loggedInUser,accessToken,refreshToken
+    //    },
+    //    "user logged in successfully"
+    //    ))
+    // next(); 
 });
 
 const logout= asyncHandler(async(req,res)=>{
