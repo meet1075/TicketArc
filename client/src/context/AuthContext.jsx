@@ -11,19 +11,26 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     const checkAuth = async () => {
+      const storedToken = localStorage.getItem("accessToken");
+      if (!storedToken) return;
+
       try {
-        const response = await axios.get('http://localhost:3000/api/v1/user/currentUser', {
-          withCredentials: true
+        const response = await axios.get("http://localhost:3000/api/v1/user/currentUser", {
+          headers: {
+            Authorization: `Bearer ${storedToken}`,
+          },
+          withCredentials: true,
         });
+
         if (response.status === 200) {
           setIsLoggedIn(true);
           setUser(response.data.data);
-          if (response.data.data.role === 'admin') {
-            navigate('/admin');
+          if (response.data.data.role === "admin") {
+            navigate("/admin");
           }
         }
       } catch (err) {
-        console.error('Auth check failed:', err.response?.data || err.message);
+        console.error("Auth check failed:", err.response?.data || err.message);
         setIsLoggedIn(false);
         setUser(null);
       }
@@ -33,17 +40,20 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (credentials) => {
     try {
-      const response = await axios.post('http://localhost:3000/api/v1/user/login', credentials, {
-        withCredentials: true
+      const response = await axios.post("http://localhost:3000/api/v1/user/login", credentials, {
+        withCredentials: true,
       });
-      console.log('Login response:', response.data); // Debug
+
       if (response.status === 200) {
+        const token = response.data.data.accessToken;
+        localStorage.setItem("accessToken", token);
         setIsLoggedIn(true);
         setUser(response.data.data.user);
-        if (response.data.data.user.role === 'admin') {
-          navigate('/admin');
+
+        if (response.data.data.user.role === "admin") {
+          navigate("/admin");
         } else {
-          navigate('/');
+          navigate("/");
         }
         return true;
       }
@@ -54,14 +64,15 @@ export const AuthProvider = ({ children }) => {
 
   const logout = async () => {
     try {
-      await axios.post('http://localhost:3000/api/v1/user/logout', {}, {
-        withCredentials: true
+      await axios.post("http://localhost:3000/api/v1/user/logout", {}, {
+        withCredentials: true,
       });
+      localStorage.removeItem("accessToken");
       setIsLoggedIn(false);
       setUser(null);
-      navigate('/');
+      navigate("/");
     } catch (err) {
-      console.error('Logout failed:', err);
+      console.error("Logout failed:", err);
     }
   };
 
