@@ -3,27 +3,53 @@ import { ApiErrors } from "../utils/ApiErrors.js";
 import { User } from "../models/user.model.js";
 
 
+// export const verifyJWT = async (req, res, next) => {
+//   try {
+//     const token = req.cookies?.accessToken || req.header("authorization")?.replace("Bearer ", "");
+
+//     if (!token) {
+//       throw new ApiErrors(401, "Unauthorized: No token provided");
+//     }
+
+//     const decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+//     const user = await User.findById(decodedToken?._id).select("-password -refreshToken");
+
+//     if (!user) {
+//       throw new ApiErrors(401, "Unauthorized: User not found");
+//     }
+
+//     req.user = user; // Attach user to request object
+//     next();
+//   } catch (error) {
+//     throw new ApiErrors(401, error?.message || "Invalid access token");
+//   }
+// };
+
 export const verifyJWT = async (req, res, next) => {
   try {
+    console.log("Cookies Received:", req.cookies);
+    console.log("Authorization Header:", req.header("authorization"));
+
     const token = req.cookies?.accessToken || req.header("authorization")?.replace("Bearer ", "");
 
     if (!token) {
-      throw new ApiErrors(401, "Unauthorized: No token provided");
+      return res.status(401).json({ message: "Unauthorized: No token provided" });
     }
 
     const decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
     const user = await User.findById(decodedToken?._id).select("-password -refreshToken");
 
     if (!user) {
-      throw new ApiErrors(401, "Unauthorized: User not found");
+      return res.status(401).json({ message: "Unauthorized: User not found" });
     }
 
     req.user = user; // Attach user to request object
     next();
   } catch (error) {
-    throw new ApiErrors(401, error?.message || "Invalid access token");
+    return res.status(401).json({ message: error?.message || "Invalid access token" });
   }
 };
+
 
 // ✅ Admin Role Middleware (verifyAdmin)
 export const verifyAdmin = (req, res, next) => {
