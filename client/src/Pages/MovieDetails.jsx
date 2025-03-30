@@ -1,70 +1,96 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import { Star, Clock, Calendar, ArrowLeft, MapPin } from 'lucide-react';
+import { AuthContext } from '../context/AuthContext'; // Adjust path
 
 function MovieDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [selectedCinema, setSelectedCinema] = useState(null);
+  const { isLoggedIn } = useContext(AuthContext);
+  const [movie, setMovie] = useState(null);
+  const [theaters, setTheaters] = useState([]);
+  const [selectedTheater, setSelectedTheater] = useState(null);
   const [selectedTime, setSelectedTime] = useState(null);
-  const [isLoggedIn, setIsLoggedIn] = useState(false); // This would come from your auth context
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     window.scrollTo(0, 0);
-  }, []);
+    fetchMovieDetails();
+    fetchTheatersAndShowtimes();
+  }, [id]);
 
-  // Mock data - in a real app, this would come from your API
-  const movie = {
-    title: "Inception",
-    poster: "https://images.unsplash.com/photo-1440404653325-ab127d49abc1?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80",
-    genre: "Sci-Fi",
-    rating: 8.8,
-    description: "A thief who steals corporate secrets through dream-sharing technology is given the inverse task of planting an idea into the mind of a C.E.O.",
-    director: "Christopher Nolan",
-    cast: ["Leonardo DiCaprio", "Joseph Gordon-Levitt", "Ellen Page"],
-    duration: "2h 28min",
-    releaseDate: "2010-07-16",
-    language: "English",
-    certificate: "PG-13"
+  const fetchMovieDetails = async () => {
+    try {
+      const token = localStorage.getItem('accessToken');
+      const response = await axios.get(`http://localhost:3000/api/v1/movie/getMovie/${id}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        withCredentials: true,
+      });
+      setMovie(response.data.data);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to fetch movie details.');
+      console.error('Error fetching movie:', err);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const cinemas = [
-    {
-      id: 1,
-      name: "PVR Cinemas",
-      location: "City Mall, Downtown",
-      showtimes: ["10:00 AM", "2:30 PM", "6:00 PM", "9:30 PM"],
-      price: 12
-    },
-    {
-      id: 2,
-      name: "INOX Movies",
-      location: "Metro Plaza, Westside",
-      showtimes: ["11:00 AM", "3:30 PM", "7:00 PM", "10:30 PM"],
-      price: 15
-    },
-    {
-      id: 3,
-      name: "Cinepolis",
-      location: "Central Square Mall",
-      showtimes: ["9:30 AM", "1:00 PM", "4:30 PM", "8:00 PM"],
-      price: 10
-    }
-  ];
+  const fetchTheatersAndShowtimes = async () => {
+    try {
+      const token = localStorage.getItem('accessToken');
+      // Fetch all theaters
+      const theaterResponse = await axios.get('http://localhost:3000/api/v1/theater/getAllTheater', {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        withCredentials: true,
+      });
+      const theaterData = theaterResponse.data.data.docs || theaterResponse.data.data;
 
-  const handleCinemaSelect = (cinema) => {
-    setSelectedCinema(cinema);
+      // Fetch showtimes for the movie
+      const showtimeResponse = await axios.get(`http://localhost:3000/api/v1/showtime/getShowtimesforMovie/${id}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        withCredentials: true,
+      });
+      const showtimes = Array.isArray(showtimeResponse.data.data) ? showtimeResponse.data.data : [];
+
+      // Map theaters with their showtimes
+      const theatersWithShowtimes = theaterData.map((theater) => {
+        const theaterShowtimes = showtimes.filter((st) => 
+          st.screenId && st.screenId.theaterId && st.screenId.theaterId.toString() === theater._id.toString()
+        );
+        return {
+          id: theater._id,
+          name: theater.name,
+          location: `${theater.location.city}, ${theater.location.state}`,
+          showtimes: theaterShowtimes.map((st) => ({
+            time: new Date(st.showDateTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            showtimeId: st._id,
+            price: st.price?.Regular || 10, // Default price if not set
+          })),
+        };
+      }).filter((t) => t.showtimes.length > 0);
+
+      setTheaters(theatersWithShowtimes);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to fetch theaters and showtimes.');
+      console.error('Error fetching theaters/showtimes:', err);
+    }
+  };
+
+  const handleTheaterSelect = (theater) => {
+    setSelectedTheater(theater);
     setSelectedTime(null);
   };
 
-  const handleTimeSelect = (time) => {
+  const handleTimeSelect = (time, showtimeId) => {
     if (!isLoggedIn) {
       setShowLoginPrompt(true);
       return;
     }
     setSelectedTime(time);
-    navigate(`/theater-seating/${id}/${selectedCinema.id}/${encodeURIComponent(time)}`);
+    navigate(`/theater-seating/${id}/${showtimeId}/${encodeURIComponent(time)}`);
   };
 
   const handleLogin = () => {
@@ -75,23 +101,23 @@ function MovieDetails() {
     navigate(-1);
   };
 
+  if (loading) return <div className="text-center py-20">Loading...</div>;
+  if (error) return <div className="text-center py-20 text-red-500">{error}</div>;
+  if (!movie) return <div className="text-center py-20">Movie not found.</div>;
+
   return (
     <div className="pt-16">
-      {/* Back Button */}
-      <button 
+      <button
         onClick={handleBack}
         className="fixed top-20 left-4 z-10 bg-white/80 backdrop-blur-sm p-2 rounded-full shadow-lg hover:bg-white transition-colors"
       >
         <ArrowLeft size={24} />
       </button>
 
-      {/* Movie Banner */}
       <div className="relative h-[400px]">
-        <div 
+        <div
           className="absolute inset-0 bg-cover bg-center"
-          style={{
-            backgroundImage: `url(${movie.poster})`
-          }}
+          style={{ backgroundImage: `url(${movie.movieImage})` }}
         >
           <div className="absolute inset-0 bg-black/50" />
         </div>
@@ -99,30 +125,29 @@ function MovieDetails() {
 
       <div className="container mx-auto px-4 py-8">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {/* Movie Poster */}
           <div className="md:col-span-1">
-            <img 
-              src={movie.poster} 
-              alt={movie.title} 
+            <img
+              src={movie.movieImage}
+              alt={movie.title}
               className="w-full rounded-lg shadow-lg -mt-32 relative z-10"
+              onError={(e) => (e.target.src = 'https://via.placeholder.com/300x450?text=No+Image')}
             />
           </div>
 
-          {/* Movie Details */}
           <div className="md:col-span-2">
             <h1 className="text-4xl font-bold mb-4">{movie.title}</h1>
-            
             <div className="flex flex-wrap items-center gap-4 mb-6">
-              <span className="px-3 py-1 bg-gray-200 rounded-full text-sm">{movie.genre}</span>
+              <span className="px-3 py-1 bg-gray-200 rounded-full text-sm">
+                {Array.isArray(movie.genre) ? movie.genre.join(", ") : movie.genre}
+              </span>
               <span className="px-3 py-1 bg-gray-200 rounded-full text-sm">{movie.language}</span>
-              <span className="px-3 py-1 bg-gray-200 rounded-full text-sm">{movie.certificate}</span>
               <div className="flex items-center text-yellow-500">
                 <Star className="w-5 h-5 fill-current" />
-                <span className="ml-1">{movie.rating}</span>
+                <span className="ml-1">{movie.rating || 'N/A'}</span>
               </div>
               <div className="flex items-center text-gray-600">
                 <Clock className="w-5 h-5" />
-                <span className="ml-1">{movie.duration}</span>
+                <span className="ml-1">{movie.duration} mins</span>
               </div>
             </div>
 
@@ -130,83 +155,71 @@ function MovieDetails() {
 
             <div className="space-y-4 mb-8">
               <div>
-                <h3 className="font-semibold mb-2">Director</h3>
-                <p>{movie.director}</p>
-              </div>
-              <div>
-                <h3 className="font-semibold mb-2">Cast</h3>
-                <p>{movie.cast.join(', ')}</p>
-              </div>
-              <div>
                 <h3 className="font-semibold mb-2">Release Date</h3>
                 <div className="flex items-center">
                   <Calendar className="w-5 h-5 mr-2" />
-                  <p>{movie.releaseDate}</p>
+                  <p>{new Date(movie.releaseDate).toLocaleDateString()}</p>
                 </div>
               </div>
             </div>
 
-            {/* Cinema Selection */}
             <div>
-              <h3 className="text-xl font-semibold mb-4">Select Cinema</h3>
-              <div className="space-y-4">
-                {cinemas.map((cinema) => (
-                  <div 
-                    key={cinema.id}
-                    className={`p-4 border rounded-lg cursor-pointer transition-colors ${
-                      selectedCinema?.id === cinema.id 
-                        ? 'border-red-500 bg-red-50' 
-                        : 'hover:border-red-500'
-                    }`}
-                    onClick={() => handleCinemaSelect(cinema)}
-                  >
-                    <div className="flex justify-between items-start mb-2">
-                      <div>
-                        <h4 className="font-semibold">{cinema.name}</h4>
-                        <div className="flex items-center text-gray-600 text-sm">
-                          <MapPin size={16} className="mr-1" />
-                          {cinema.location}
+              <h3 className="text-xl font-semibold mb-4">Select Theater</h3>
+              {theaters.length > 0 ? (
+                <div className="space-y-4">
+                  {theaters.map((theater) => (
+                    <div
+                      key={theater.id}
+                      className={`p-4 border rounded-lg cursor-pointer transition-colors ${
+                        selectedTheater?.id === theater.id ? 'border-red-500 bg-red-50' : 'hover:border-red-500'
+                      }`}
+                      onClick={() => handleTheaterSelect(theater)}
+                    >
+                      <div className="flex justify-between items-start mb-2">
+                        <div>
+                          <h4 className="font-semibold">{theater.name}</h4>
+                          <div className="flex items-center text-gray-600 text-sm">
+                            <MapPin size={16} className="mr-1" />
+                            {theater.location}
+                          </div>
                         </div>
                       </div>
-                      {/* <span className="text-lg font-semibold">${cinema.price}</span> */}
+                      {selectedTheater?.id === theater.id && (
+                        <div className="mt-4">
+                          <p className="text-sm font-medium mb-2">Select Showtime</p>
+                          <div className="flex flex-wrap gap-2">
+                            {theater.showtimes.map((showtime) => (
+                              <button
+                                key={showtime.showtimeId}
+                                onClick={() => handleTimeSelect(showtime.time, showtime.showtimeId)}
+                                className={`px-4 py-2 rounded-lg transition-colors ${
+                                  selectedTime === showtime.time
+                                    ? 'bg-red-500 text-white'
+                                    : 'bg-gray-100 hover:bg-red-500 hover:text-white'
+                                }`}
+                              >
+                                {showtime.time} (${showtime.price})
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
-                    
-                    {selectedCinema?.id === cinema.id && (
-                      <div className="mt-4">
-                        <p className="text-sm font-medium mb-2">Select Showtime</p>
-                        <div className="flex flex-wrap gap-2">
-                          {cinema.showtimes.map((time, index) => (
-                            <button
-                              key={index}
-                              onClick={() => handleTimeSelect(time)}
-                              className={`px-4 py-2 rounded-lg transition-colors ${
-                                selectedTime === time
-                                  ? 'bg-red-500 text-white'
-                                  : 'bg-gray-100 hover:bg-red-500 hover:text-white'
-                              }`}
-                            >
-                              {time}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-gray-600">No showtimes available for this movie.</p>
+              )}
             </div>
           </div>
         </div>
       </div>
 
-      {/* Login Prompt Modal */}
       {showLoginPrompt && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-8 max-w-md w-full mx-4">
             <h3 className="text-xl font-bold mb-4">Login Required</h3>
-            <p className="text-gray-600 mb-6">
-              Please log in to continue with your booking.
-            </p>
+            <p className="text-gray-600 mb-6">Please log in to continue with your booking.</p>
             <div className="flex justify-end space-x-4">
               <button
                 onClick={() => setShowLoginPrompt(false)}
