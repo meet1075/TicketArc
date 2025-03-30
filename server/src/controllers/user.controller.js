@@ -2,6 +2,7 @@ import {asyncHandler} from '../utils/asyncHandler.js'
 import {ApiErrors} from '../utils/ApiErrors.js'
 import{ApiResponse} from "../utils/ApiResponse.js"
 import {User} from '../models/user.model.js'
+import { Booking } from '../models/booking.model.js'; // Add this line
 import jwt from 'jsonwebtoken'
 import mongoose from 'mongoose'
 

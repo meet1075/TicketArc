@@ -13,7 +13,7 @@ router.route("/logout").post(verifyJWT, logout);
 router.route("/currentUser").get(verifyJWT,getCurrentUser)
 router.route("/update-account").patch(verifyJWT,updateAccountDetails)
 router.route("/change-password").post(verifyJWT,changeCurrentPassword)
-router.route("/booking-history").post(verifyJWT,bookingHistory)
+router.route("/booking-history").get(verifyJWT,bookingHistory)
 
 
 export default router;

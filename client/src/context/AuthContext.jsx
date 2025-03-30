@@ -12,22 +12,22 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const checkAuth = async () => {
       const storedToken = localStorage.getItem("accessToken");
-      if (!storedToken) return;
+      if (!storedToken) {
+        setIsLoggedIn(false);
+        setUser(null);
+        return;
+      }
 
       try {
         const response = await axios.get("http://localhost:3000/api/v1/user/currentUser", {
-          headers: {
-            Authorization: `Bearer ${storedToken}`,
-          },
+          headers: { Authorization: `Bearer ${storedToken}` },
           withCredentials: true,
         });
 
         if (response.status === 200) {
           setIsLoggedIn(true);
           setUser(response.data.data);
-          if (response.data.data.role === "admin") {
-            navigate("/admin");
-          }
+          if (response.data.data.role === "admin") navigate("/admin");
         }
       } catch (err) {
         console.error("Auth check failed:", err.response?.data || err.message);
@@ -35,6 +35,7 @@ export const AuthProvider = ({ children }) => {
         setUser(null);
       }
     };
+
     checkAuth();
   }, [navigate]);
 
@@ -42,19 +43,16 @@ export const AuthProvider = ({ children }) => {
     try {
       const response = await axios.post("http://localhost:3000/api/v1/user/login", credentials, {
         withCredentials: true,
+        
       });
+      console.log('Login response headers:', response.headers);
 
       if (response.status === 200) {
         const token = response.data.data.accessToken;
         localStorage.setItem("accessToken", token);
         setIsLoggedIn(true);
         setUser(response.data.data.user);
-
-        if (response.data.data.user.role === "admin") {
-          navigate("/admin");
-        } else {
-          navigate("/");
-        }
+        navigate(response.data.data.user.role === "admin" ? "/admin" : "/");
         return true;
       }
     } catch (err) {
@@ -64,9 +62,7 @@ export const AuthProvider = ({ children }) => {
 
   const logout = async () => {
     try {
-      await axios.post("http://localhost:3000/api/v1/user/logout", {}, {
-        withCredentials: true,
-      });
+      await axios.post("http://localhost:3000/api/v1/user/logout", {}, { withCredentials: true });
       localStorage.removeItem("accessToken");
       setIsLoggedIn(false);
       setUser(null);
@@ -77,7 +73,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ isLoggedIn, user, login, logout }}>
+    <AuthContext.Provider value={{ isLoggedIn, user, setUser, login, logout }}>
       {children}
     </AuthContext.Provider>
   );
