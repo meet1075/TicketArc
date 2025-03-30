@@ -67,7 +67,7 @@ const HeroSection = () => {
           >
             <div className="absolute inset-0 bg-gradient-to-r from-black/90 to-black/50" />
           </div>
-          <div className="relative container mx-auto px-8 md:px-12 h-full flex items-center">
+          <div className="relative container mx-auto px-8 md:px-20 h-full flex items-center">
             <div className="max-w-2xl text-white">
               <h1 className="text-[clamp(1.5rem,5vw,3rem)] font-bold mb-6 leading-tight">
                 {slide.title}
