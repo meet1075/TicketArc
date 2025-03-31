@@ -3,7 +3,7 @@ import axios from 'axios';
 import { X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-function AdminModal({ showModal, setShowModal, modalType, editingItem, setEditingItem }) {
+function AdminModal({ showModal, setShowModal, modalType, editingItem, setEditingItem, refresh }) {
   const [formData, setFormData] = useState({
     title: '',
     movieImage: null,
@@ -24,7 +24,7 @@ function AdminModal({ showModal, setShowModal, modalType, editingItem, setEditin
       if (modalType === 'movie') {
         setFormData({
           title: editingItem.title || '',
-          movieImage: null, // File input reset
+          movieImage: null,
           genre: Array.isArray(editingItem.genre) ? editingItem.genre.join(', ') : editingItem.genre || '',
           duration: editingItem.duration || '',
           description: editingItem.description || '',
@@ -90,7 +90,7 @@ function AdminModal({ showModal, setShowModal, modalType, editingItem, setEditin
       ? `http://localhost:3000/api/v1/${modalType === 'movie' ? 'movie/update' : 'theater/updateTheater'}/${editingItem._id}`
       : `http://localhost:3000/api/v1/${modalType === 'movie' ? 'movie/addMovie' : 'theater/addTheater'}`;
 
-    const data = new FormData();
+    const data = modalType === 'movie' ? new FormData() : {};
     if (modalType === 'movie') {
       data.append('title', formData.title);
       if (formData.movieImage) data.append('movieImage', formData.movieImage);
@@ -100,9 +100,9 @@ function AdminModal({ showModal, setShowModal, modalType, editingItem, setEditin
       data.append('language', formData.language);
       data.append('releaseDate', formData.releaseDate);
     } else {
-      data.append('name', formData.name);
-      data.append('location', JSON.stringify(formData.location));
-      if (formData.facilities) data.append('facilities', formData.facilities.split(',').map((f) => f.trim()));
+      data.name = formData.name;
+      data.location = formData.location;
+      if (formData.facilities) data.facilities = formData.facilities.split(',').map((f) => f.trim());
     }
 
     try {
@@ -112,14 +112,15 @@ function AdminModal({ showModal, setShowModal, modalType, editingItem, setEditin
         data,
         headers: {
           Authorization: `Bearer ${token}`,
-          ...(modalType === 'movie' ? { 'Content-Type': 'multipart/form-data' } : {}),
+          ...(modalType === 'movie' ? { 'Content-Type': 'multipart/form-data' } : { 'Content-Type': 'application/json' }),
         },
         withCredentials: true,
       });
       setShowModal(false);
+      if (refresh) refresh(); // Trigger parent refresh
     } catch (err) {
       setError(`Failed to ${editingItem ? 'update' : 'add'} ${modalType}: ${err.response?.data?.message || err.message}`);
-      console.error('Error submitting form:', err);
+      console.error('Error submitting form:', err.response || err);
     }
   };
 

@@ -26,7 +26,12 @@ function AdminHome() {
   const handleModalClose = () => {
     setShowModal(false);
     setEditingItem(null);
-    setRefreshKey((prev) => prev + 1); // Trigger refresh
+    setRefreshKey((prev) => prev + 1); // Trigger refresh of child components
+  };
+
+  // Refresh function to pass to AdminModal
+  const handleRefresh = () => {
+    setRefreshKey((prev) => prev + 1); // Increment refreshKey to trigger useEffect in child components
   };
 
   // Redirect non-admins
@@ -91,6 +96,8 @@ function AdminHome() {
         )}
         {activeTab === 'analytics' && <AnalyticsTab />}
         {activeTab === 'settings' && <SettingsTab />}
+        
+        {/* Updated AdminModal with refresh prop */}
         {showModal && (
           <AdminModal
             showModal={showModal}
@@ -98,6 +105,7 @@ function AdminHome() {
             modalType={modalType}
             editingItem={editingItem}
             setEditingItem={setEditingItem}
+            refresh={handleRefresh} // Added refresh prop
           />
         )}
       </div>

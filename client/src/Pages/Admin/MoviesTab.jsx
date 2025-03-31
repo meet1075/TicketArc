@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Plus, Edit2, Trash2 } from 'lucide-react';
+import { Plus, Edit2, Trash2, Clock } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 function MoviesTab({ setModalType, setShowModal, setEditingItem, refreshKey }) {
   const [movies, setMovies] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [showtimeModal, setShowtimeModal] = useState(false);
+  const [selectedMovie, setSelectedMovie] = useState(null);
 
   useEffect(() => {
     fetchMovies();
@@ -21,7 +23,7 @@ function MoviesTab({ setModalType, setShowModal, setEditingItem, refreshKey }) {
         headers: { Authorization: `Bearer ${token}` },
         withCredentials: true,
       });
-      setMovies(response.data.data.docs || response.data.data); // Adjust for pagination
+      setMovies(response.data.data.docs || response.data.data);
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to fetch movies.');
       console.error('Error fetching movies:', err);
@@ -50,6 +52,11 @@ function MoviesTab({ setModalType, setShowModal, setEditingItem, refreshKey }) {
         console.error('Error deleting movie:', err);
       }
     }
+  };
+
+  const handleAddShowtime = (movie) => {
+    setSelectedMovie(movie);
+    setShowtimeModal(true);
   };
 
   return (
@@ -104,13 +111,226 @@ function MoviesTab({ setModalType, setShowModal, setEditingItem, refreshKey }) {
                     <Trash2 size={16} />
                     <span>Delete</span>
                   </button>
+                  <button
+                    onClick={() => handleAddShowtime(movie)}
+                    className="flex-1 flex items-center justify-center space-x-2 bg-purple-500 text-white px-2 py-1 rounded hover:bg-purple-600 transition-colors text-sm"
+                  >
+                    <Clock size={16} />
+                    <span>Showtime</span>
+                  </button>
                 </div>
               </div>
             </div>
           ))}
         </div>
       )}
+
+      {showtimeModal && (
+        <ShowtimeModal
+          movie={selectedMovie}
+          setShowtimeModal={setShowtimeModal}
+          refresh={() => fetchMovies()}
+        />
+      )}
     </motion.div>
+  );
+}
+
+// New Showtime Modal Component
+function ShowtimeModal({ movie, setShowtimeModal, refresh }) {
+  const [theaters, setTheaters] = useState([]);
+  const [screens, setScreens] = useState([]);
+  const [formData, setFormData] = useState({
+    theaterId: '',
+    screenId: '',
+    showDateTime: '',
+    status: 'Scheduled',
+    priceRegular: '',
+    pricePremium: '',
+  });
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    fetchTheaters();
+  }, []);
+
+  const fetchTheaters = async () => {
+    try {
+      const token = localStorage.getItem('accessToken');
+      const response = await axios.get('http://localhost:3000/api/v1/theater/getAllTheater', {
+        headers: { Authorization: `Bearer ${token}` },
+        withCredentials: true,
+      });
+      setTheaters(response.data.data.docs || response.data.data);
+    } catch (err) {
+      setError('Failed to fetch theaters.');
+      console.error(err);
+    }
+  };
+
+  const fetchScreens = async (theaterId) => {
+    try {
+      const token = localStorage.getItem('accessToken');
+      const response = await axios.get(`http://localhost:3000/api/v1/theater/theaters/allScreen/${theaterId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+        withCredentials: true,
+      });
+      setScreens(response.data.data[0]?.screenDetails || []);
+    } catch (err) {
+      setError('Failed to fetch screens.');
+      console.error(err);
+    }
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+    if (name === 'theaterId') {
+      setScreens([]);
+      fetchScreens(value);
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError(null);
+    const token = localStorage.getItem('accessToken');
+    try {
+      await axios.post(
+        `http://localhost:3000/api/v1/showtime/addShowtime/${movie._id}/${formData.screenId}`,
+        {
+          showDateTime: formData.showDateTime,
+          status: formData.status,
+          price: {
+            Regular: parseFloat(formData.priceRegular),
+            Premium: parseFloat(formData.pricePremium),
+          },
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+          withCredentials: true,
+        }
+      );
+      setShowtimeModal(false);
+      refresh();
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to add showtime.');
+      console.error('Error adding showtime:', err);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.95 }}
+        className="bg-white rounded-lg w-full max-w-lg max-h-[90vh] overflow-y-auto p-6"
+      >
+        <h2 className="text-2xl font-bold mb-4">Add Showtime for {movie.title}</h2>
+        {error && <p className="text-red-500 mb-4">{error}</p>}
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Theater</label>
+            <select
+              name="theaterId"
+              value={formData.theaterId}
+              onChange={handleInputChange}
+              className="w-full p-2 border rounded-md"
+              required
+            >
+              <option value="">Select Theater</option>
+              {theaters.map((theater) => (
+                <option key={theater._id} value={theater._id}>
+                  {theater.name} ({theater.location.city}, {theater.location.state})
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Screen</label>
+            <select
+              name="screenId"
+              value={formData.screenId}
+              onChange={handleInputChange}
+              className="w-full p-2 border rounded-md"
+              required
+              disabled={!formData.theaterId}
+            >
+              <option value="">Select Screen</option>
+              {screens.map((screen) => (
+                <option key={screen._id} value={screen._id}>
+                  Screen {screen.screenNumber} ({screen.screenType}, {screen.totalSeats} seats)
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Show Date & Time</label>
+            <input
+              type="datetime-local"
+              name="showDateTime"
+              value={formData.showDateTime}
+              onChange={handleInputChange}
+              className="w-full p-2 border rounded-md"
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+            <select
+              name="status"
+              value={formData.status}
+              onChange={handleInputChange}
+              className="w-full p-2 border rounded-md"
+            >
+              <option value="Scheduled">Scheduled</option>
+              <option value="Cancelled">Cancelled</option>
+              <option value="Completed">Completed</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Price (Regular)</label>
+            <input
+              type="number"
+              name="priceRegular"
+              value={formData.priceRegular}
+              onChange={handleInputChange}
+              className="w-full p-2 border rounded-md"
+              step="0.01"
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Price (Premium)</label>
+            <input
+              type="number"
+              name="pricePremium"
+              value={formData.pricePremium}
+              onChange={handleInputChange}
+              className="w-full p-2 border rounded-md"
+              step="0.01"
+              required
+            />
+          </div>
+          <div className="flex justify-end space-x-4">
+            <button
+              type="button"
+              onClick={() => setShowtimeModal(false)}
+              className="px-4 py-2 text-gray-600 hover:text-gray-800"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600"
+            >
+              Add Showtime
+            </button>
+          </div>
+        </form>
+      </motion.div>
+    </div>
   );
 }
 
