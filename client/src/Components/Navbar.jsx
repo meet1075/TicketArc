@@ -69,12 +69,7 @@ const Navbar = () => {
                   <button 
                     onClick={() => setDropdownOpen(!dropdownOpen)}
                     className="flex items-center space-x-2 hover:text-red-500 transition-colors"
-                  >
-                    <img 
-                      src={user?.photo || "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"} 
-                      alt={user?.name || "User"}
-                      className="w-8 h-8 rounded-full border-2 border-transparent hover:border-red-500 transition-colors"
-                    />
+                  > 
                     <span className="text-sm md:text-base">Hello, {user?.fullName || "User"}</span>
                     <ChevronDown size={16} className={`transform transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} />
                   </button>

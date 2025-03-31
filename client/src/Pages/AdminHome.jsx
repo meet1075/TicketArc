@@ -1,7 +1,7 @@
 import React, { useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LogOut } from 'lucide-react';
-import { AuthContext } from '../context/AuthContext';
+import { AuthContext } from '../context/AuthContext'; // Adjust path
 import MoviesTab from './Admin/MoviesTab';
 import TheatersTab from './Admin/TheatersTab';
 import AnalyticsTab from './Admin/AnalyticsTab';
@@ -26,11 +26,16 @@ function AdminHome() {
   const handleModalClose = () => {
     setShowModal(false);
     setEditingItem(null);
-    setRefreshKey(prev => prev + 1);
+    setRefreshKey((prev) => prev + 1); // Trigger refresh of child components
+  };
+
+  // Refresh function to pass to AdminModal
+  const handleRefresh = () => {
+    setRefreshKey((prev) => prev + 1); // Increment refreshKey to trigger useEffect in child components
   };
 
   // Redirect non-admins
-  if (user?.role !== 'admin') {
+  if (!user || user.role !== 'admin') {
     navigate('/');
     return null;
   }
@@ -41,7 +46,7 @@ function AdminHome() {
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between h-16">
             <h1 className="text-lg md:text-xl font-bold">TicketArc Admin</h1>
-            <button 
+            <button
               onClick={handleLogout}
               className="flex items-center space-x-2 bg-red-500 px-3 py-2 rounded-lg hover:bg-red-600 transition-colors"
             >
@@ -58,7 +63,7 @@ function AdminHome() {
             { id: 'movies', Icon: Film, label: 'Movies' },
             { id: 'theaters', Icon: Building2, label: 'Theaters' },
             { id: 'analytics', Icon: BarChart4, label: 'Analytics' },
-            { id: 'settings', Icon: Settings2, label: 'Settings' }
+            { id: 'settings', Icon: Settings2, label: 'Settings' },
           ].map(({ id, Icon, label }) => (
             <button
               key={id}
@@ -74,31 +79,35 @@ function AdminHome() {
         </div>
 
         {activeTab === 'movies' && (
-          <MoviesTab 
-            refreshKey={refreshKey} 
-            setModalType={setModalType} 
-            setShowModal={setShowModal} 
-            setEditingItem={setEditingItem} 
+          <MoviesTab
+            refreshKey={refreshKey}
+            setModalType={setModalType}
+            setShowModal={setShowModal}
+            setEditingItem={setEditingItem}
           />
         )}
         {activeTab === 'theaters' && (
-          <TheatersTab 
-            refreshKey={refreshKey} 
-            setModalType={setModalType} 
-            setShowModal={setShowModal} 
-            setEditingItem={setEditingItem} 
+          <TheatersTab
+            refreshKey={refreshKey}
+            setModalType={setModalType}
+            setShowModal={setShowModal}
+            setEditingItem={setEditingItem}
           />
         )}
         {activeTab === 'analytics' && <AnalyticsTab />}
         {activeTab === 'settings' && <SettingsTab />}
-
-        <AdminModal 
-          showModal={showModal}
-          setShowModal={handleModalClose}
-          modalType={modalType}
-          editingItem={editingItem}
-          setEditingItem={setEditingItem}
-        />
+        
+        {/* Updated AdminModal with refresh prop */}
+        {showModal && (
+          <AdminModal
+            showModal={showModal}
+            setShowModal={handleModalClose}
+            modalType={modalType}
+            editingItem={editingItem}
+            setEditingItem={setEditingItem}
+            refresh={handleRefresh} // Added refresh prop
+          />
+        )}
       </div>
     </div>
   );
