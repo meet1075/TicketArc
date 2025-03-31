@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Plus, Edit2, Trash2 } from 'lucide-react';
+import { Plus, Edit2, Trash2, MonitorPlay, Clock } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 function TheatersTab({ setModalType, setShowModal, setEditingItem, refreshKey }) {
@@ -22,17 +22,23 @@ function TheatersTab({ setModalType, setShowModal, setEditingItem, refreshKey })
         withCredentials: true,
       });
       const theaterData = response.data.data.docs || response.data.data;
-      // Fetch screen details for each theater
       const theatersWithScreens = await Promise.all(
         theaterData.map(async (theater) => {
-          if (theater.screens.length > 0) {
-            const screenResponse = await axios.get(`http://localhost:3000/api/v1/theater/theaters/allScreen/${theater._id}`, {
-              headers: { Authorization: `Bearer ${token}` },
-              withCredentials: true,
-            });
-            return { ...theater, screens: screenResponse.data.data[0]?.screenDetails || [] };
-          }
-          return theater;
+          const screenResponse = await axios.get(
+            `http://localhost:3000/api/v1/theater/theaters/allScreen/${theater._id}`,
+            { headers: { Authorization: `Bearer ${token}` }, withCredentials: true }
+          );
+          const screens = screenResponse.data.data[0]?.screenDetails || [];
+          const screensWithShowtimes = await Promise.all(
+            screens.map(async (screen) => {
+              const showtimeResponse = await axios.get(
+                `http://localhost:3000/api/v1/showtime/getShowtimesforScreen/${screen._id}`,
+                { headers: { Authorization: `Bearer ${token}` }, withCredentials: true }
+              );
+              return { ...screen, showtimes: showtimeResponse.data.data || [] };
+            })
+          );
+          return { ...theater, screens: screensWithShowtimes };
         })
       );
       setTheaters(theatersWithScreens);
@@ -62,6 +68,39 @@ function TheatersTab({ setModalType, setShowModal, setEditingItem, refreshKey })
       } catch (err) {
         setError(err.response?.data?.message || 'Failed to delete theater.');
         console.error('Error deleting theater:', err);
+      }
+    }
+  };
+
+  const handleAddScreen = (theater) => {
+    setModalType('screen');
+    setEditingItem({ theaterId: theater._id });
+    setShowModal(true);
+  };
+
+  const handleEditScreen = (screen, theaterId) => {
+    setModalType('screen');
+    setEditingItem({ ...screen, theaterId });
+    setShowModal(true);
+  };
+
+  const handleDeleteScreen = async (theaterId, screenId) => {
+    if (window.confirm('Are you sure you want to delete this screen?')) {
+      try {
+        const token = localStorage.getItem('accessToken');
+        await axios.delete(`http://localhost:3000/api/v1/theater/theaters/deleteScreen/${theaterId}/${screenId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+          withCredentials: true,
+        });
+        setTheaters(theaters.map((theater) => {
+          if (theater._id === theaterId) {
+            return { ...theater, screens: theater.screens.filter((screen) => screen._id !== screenId) };
+          }
+          return theater;
+        }));
+      } catch (err) {
+        setError(err.response?.data?.message || 'Failed to delete screen.');
+        console.error('Error deleting screen:', err);
       }
     }
   };
@@ -100,15 +139,54 @@ function TheatersTab({ setModalType, setShowModal, setEditingItem, refreshKey })
                   </p>
                 </div>
                 <div>
-                  <h4 className="font-medium mb-2 text-sm">Screens</h4>
+                  <div className="flex justify-between items-center mb-2">
+                    <h4 className="font-medium text-sm">Screens</h4>
+                    <button
+                      onClick={() => handleAddScreen(theater)}
+                      className="flex items-center space-x-1 text-green-500 hover:text-green-600 text-sm"
+                    >
+                      <Plus size={16} />
+                      <span>Add Screen</span>
+                    </button>
+                  </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     {theater.screens.length > 0 ? (
                       theater.screens.map((screen) => (
                         <div key={screen._id} className="bg-gray-50 p-2 rounded text-sm">
-                          <p className="font-medium">Screen {screen.screenNumber}</p>
-                          <p className="text-gray-600">
-                            {screen.screenType} • {screen.totalSeats} seats
-                          </p>
+                          <div className="flex justify-between items-center">
+                            <div>
+                              <p className="font-medium">Screen {screen.screenNumber}</p>
+                              <p className="text-gray-600">
+                                {screen.screenType} • {screen.totalSeats} seats
+                              </p>
+                            </div>
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => handleEditScreen(screen, theater._id)}
+                                className="text-blue-500 hover:text-blue-600"
+                              >
+                                <Edit2 size={16} />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteScreen(theater._id, screen._id)}
+                                className="text-red-500 hover:text-red-600"
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            </div>
+                          </div>
+                          <div className="mt-2">
+                            <p className="text-xs font-medium">Showtimes:</p>
+                            {screen.showtimes.length > 0 ? (
+                              screen.showtimes.map((showtime) => (
+                                <p key={showtime._id} className="text-xs text-gray-600">
+                                  {new Date(showtime.showDateTime).toLocaleString()} - {showtime.status}
+                                </p>
+                              ))
+                            ) : (
+                              <p className="text-xs text-gray-600">No showtimes scheduled.</p>
+                            )}
+                          </div>
                         </div>
                       ))
                     ) : (

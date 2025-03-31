@@ -16,6 +16,10 @@ function AdminModal({ showModal, setShowModal, modalType, editingItem, setEditin
     location: { city: '', state: '' },
     screens: [],
     facilities: '',
+    screenNumber: '',
+    screenType: '2D',
+    totalSeats: '',
+    theaterId: '',
   });
   const [error, setError] = useState(null);
 
@@ -34,6 +38,10 @@ function AdminModal({ showModal, setShowModal, modalType, editingItem, setEditin
           location: { city: '', state: '' },
           screens: [],
           facilities: '',
+          screenNumber: '',
+          screenType: '2D',
+          totalSeats: '',
+          theaterId: '',
         });
       } else if (modalType === 'theater') {
         setFormData({
@@ -48,6 +56,28 @@ function AdminModal({ showModal, setShowModal, modalType, editingItem, setEditin
           location: editingItem.location || { city: '', state: '' },
           screens: editingItem.screens || [],
           facilities: Array.isArray(editingItem.facilities) ? editingItem.facilities.join(', ') : editingItem.facilities || '',
+          screenNumber: '',
+          screenType: '2D',
+          totalSeats: '',
+          theaterId: '',
+        });
+      } else if (modalType === 'screen') {
+        setFormData({
+          title: '',
+          movieImage: null,
+          genre: '',
+          duration: '',
+          description: '',
+          language: '',
+          releaseDate: '',
+          name: '',
+          location: { city: '', state: '' },
+          screens: [],
+          facilities: '',
+          screenNumber: editingItem.screenNumber || '',
+          screenType: editingItem.screenType || '2D',
+          totalSeats: editingItem.totalSeats || '',
+          theaterId: editingItem.theaterId || '',
         });
       }
     } else {
@@ -63,6 +93,10 @@ function AdminModal({ showModal, setShowModal, modalType, editingItem, setEditin
         location: { city: '', state: '' },
         screens: [],
         facilities: '',
+        screenNumber: '',
+        screenType: '2D',
+        totalSeats: '',
+        theaterId: editingItem?.theaterId || '',
       });
     }
   }, [editingItem, modalType]);
@@ -86,12 +120,14 @@ function AdminModal({ showModal, setShowModal, modalType, editingItem, setEditin
     e.preventDefault();
     setError(null);
     const token = localStorage.getItem('accessToken');
-    const url = editingItem
-      ? `http://localhost:3000/api/v1/${modalType === 'movie' ? 'movie/update' : 'theater/updateTheater'}/${editingItem._id}`
-      : `http://localhost:3000/api/v1/${modalType === 'movie' ? 'movie/addMovie' : 'theater/addTheater'}`;
+    let url = '';
+    let data = {};
 
-    const data = modalType === 'movie' ? new FormData() : {};
     if (modalType === 'movie') {
+      url = editingItem
+        ? `http://localhost:3000/api/v1/movie/update/${editingItem._id}`
+        : 'http://localhost:3000/api/v1/movie/addMovie';
+      data = new FormData();
       data.append('title', formData.title);
       if (formData.movieImage) data.append('movieImage', formData.movieImage);
       data.append('genre', formData.genre.split(',').map((g) => g.trim()));
@@ -99,15 +135,29 @@ function AdminModal({ showModal, setShowModal, modalType, editingItem, setEditin
       data.append('description', formData.description);
       data.append('language', formData.language);
       data.append('releaseDate', formData.releaseDate);
-    } else {
-      data.name = formData.name;
-      data.location = formData.location;
-      if (formData.facilities) data.facilities = formData.facilities.split(',').map((f) => f.trim());
+    } else if (modalType === 'theater') {
+      url = editingItem
+        ? `http://localhost:3000/api/v1/theater/updateTheater/${editingItem._id}`
+        : 'http://localhost:3000/api/v1/theater/addTheater';
+      data = {
+        name: formData.name,
+        location: formData.location,
+        facilities: formData.facilities ? formData.facilities.split(',').map((f) => f.trim()) : [],
+      };
+    } else if (modalType === 'screen') {
+      url = editingItem?._id
+        ? `http://localhost:3000/api/v1/screen/update/${editingItem._id}`
+        : `http://localhost:3000/api/v1/theater/theaters/addScreen/${formData.theaterId}`;
+      data = {
+        screenNumber: formData.screenNumber,
+        screenType: formData.screenType,
+        totalSeats: formData.totalSeats,
+      };
     }
 
     try {
       await axios({
-        method: editingItem ? 'patch' : 'post',
+        method: editingItem?._id ? 'patch' : 'post',
         url,
         data,
         headers: {
@@ -117,9 +167,9 @@ function AdminModal({ showModal, setShowModal, modalType, editingItem, setEditin
         withCredentials: true,
       });
       setShowModal(false);
-      if (refresh) refresh(); // Trigger parent refresh
+      if (refresh) refresh();
     } catch (err) {
-      setError(`Failed to ${editingItem ? 'update' : 'add'} ${modalType}: ${err.response?.data?.message || err.message}`);
+      setError(`Failed to ${editingItem?._id ? 'update' : 'add'} ${modalType}: ${err.response?.data?.message || err.message}`);
       console.error('Error submitting form:', err.response || err);
     }
   };
@@ -139,6 +189,10 @@ function AdminModal({ showModal, setShowModal, modalType, editingItem, setEditin
       location: { city: '', state: '' },
       screens: [],
       facilities: '',
+      screenNumber: '',
+      screenType: '2D',
+      totalSeats: '',
+      theaterId: '',
     });
   };
 
@@ -155,7 +209,11 @@ function AdminModal({ showModal, setShowModal, modalType, editingItem, setEditin
             <div className="p-4 sm:p-6">
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-xl sm:text-2xl font-bold">
-                  {editingItem ? `Edit ${modalType === 'movie' ? 'Movie' : 'Theater'}` : `Add New ${modalType === 'movie' ? 'Movie' : 'Theater'}`}
+                  {modalType === 'movie'
+                    ? editingItem ? 'Edit Movie' : 'Add New Movie'
+                    : modalType === 'theater'
+                    ? editingItem ? 'Edit Theater' : 'Add New Theater'
+                    : editingItem?._id ? 'Edit Screen' : 'Add New Screen'}
                 </h2>
                 <button onClick={closeModal} className="text-gray-500 hover:text-gray-700">
                   <X size={24} />
@@ -196,7 +254,7 @@ function AdminModal({ showModal, setShowModal, modalType, editingItem, setEditin
                       <textarea name="description" value={formData.description} onChange={handleInputChange} required rows="4" className="w-full p-2 border rounded-md" />
                     </div>
                   </div>
-                ) : (
+                ) : modalType === 'theater' ? (
                   <div className="space-y-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Theater Name</label>
@@ -215,14 +273,51 @@ function AdminModal({ showModal, setShowModal, modalType, editingItem, setEditin
                       <input type="text" name="facilities" value={formData.facilities} onChange={handleInputChange} className="w-full p-2 border rounded-md" />
                     </div>
                   </div>
-                )}
+                ) : modalType === 'screen' ? (
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Screen Number</label>
+                      <input
+                        type="number"
+                        name="screenNumber"
+                        value={formData.screenNumber}
+                        onChange={handleInputChange}
+                        required
+                        className="w-full p-2 border rounded-md"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Screen Type</label>
+                      <select
+                        name="screenType"
+                        value={formData.screenType}
+                        onChange={handleInputChange}
+                        className="w-full p-2 border rounded-md"
+                      >
+                        <option value="2D">2D</option>
+                        <option value="3D">3D</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Total Seats</label>
+                      <input
+                        type="number"
+                        name="totalSeats"
+                        value={formData.totalSeats}
+                        onChange={handleInputChange}
+                        required
+                        className="w-full p-2 border rounded-md"
+                      />
+                    </div>
+                  </div>
+                ) : null}
 
                 <div className="flex justify-end space-x-4 pt-4">
                   <button type="button" onClick={closeModal} className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors">
                     Cancel
                   </button>
                   <button type="submit" className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors">
-                    {editingItem ? 'Save Changes' : `Add ${modalType === 'movie' ? 'Movie' : 'Theater'}`}
+                    {editingItem?._id ? 'Save Changes' : `Add ${modalType === 'movie' ? 'Movie' : modalType === 'theater' ? 'Theater' : 'Screen'}`}
                   </button>
                 </div>
               </form>
