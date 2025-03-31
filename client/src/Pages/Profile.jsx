@@ -8,6 +8,7 @@ function Profile() {
   const [isEditing, setIsEditing] = useState(false);
   const [userData, setUserData] = useState({
     fullName: '',
+    userName: '', // Added username
     email: '',
   });
 
@@ -15,6 +16,7 @@ function Profile() {
     if (user) {
       setUserData({
         fullName: user.fullName,
+        userName: user.userName,
         email: user.email,
       });
     }
@@ -86,7 +88,13 @@ function Profile() {
                   </div>
                 )}
               </div>
-
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Username</label>
+                <div className="flex items-center">
+                  <User size={18} className="text-gray-500 mr-2" />
+                  <span>{userData.userName}</span> {/* Display username */}
+                </div>
+              </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
                 <div className="flex items-center">

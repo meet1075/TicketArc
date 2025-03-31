@@ -2,8 +2,8 @@ import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { ThemeProvider } from './context/ThemeContext';
 import { AuthProvider } from './context/AuthContext'; // Import AuthProvider
-import Navbar from './components/Navbar';
-import Footer from './components/Footer';
+import Navbar from './components/Navbar.jsx';
+import Footer from './components/Footer.jsx';
 import Home from './pages/Home';
 import Login from './pages/Login.jsx';
 import Register from './pages/Register';
@@ -11,12 +11,12 @@ import MovieDetails from './pages/MovieDetails';
 import Profile from './pages/Profile';
 import AboutUs from './pages/AboutUs';
 import Contact from './pages/Contact';
-import TheaterSeating from './components/TheaterSeating';
+import TheaterSeating from './components/TheaterSeating.jsx';
 import Bookings from './pages/Bookings';
 import AdminHome from './pages/AdminHome';
 import PrivacyPolicy from './pages/Policy';
 import TermsConditions from './pages/TermsConditions';
-import Settings from './pages/Settings';
+// import Settings from './pages/Settings';
 
 function App() {
   return (
@@ -38,7 +38,7 @@ function App() {
               <Route path="/admin" element={<AdminHome />} />
               <Route path="/privacy-policy" element={<PrivacyPolicy />} />
               <Route path="/terms-conditions" element={<TermsConditions />} />
-              <Route path="/settings" element={<Settings />} />
+              {/* <Route path="/settings" element={<Settings />} /> */}
             </Routes>
           </div>
           <Footer /> {/* Footer always shows */}

@@ -89,10 +89,10 @@ const Navbar = () => {
                       variants={dropdownVariants}
                       className="absolute right-0 mt-2 w-64 bg-white rounded-md shadow-lg py-1 text-gray-800"
                     >
-                      <div className="px-4 py-2 border-b border-gray-100">
+                      {/* <div className="px-4 py-2 border-b border-gray-100">
                         <p className="text-sm text-gray-500">Loyalty Points</p>
                         <p className="font-bold text-red-500">{user?.points || 0} points</p>
-                      </div>
+                      </div> */}
                       <Link to="/profile" className="flex items-center px-4 py-2 hover:bg-gray-100 transition-colors">
                         <User size={16} className="mr-2" />
                         <span>Profile</span>
@@ -101,10 +101,10 @@ const Navbar = () => {
                         <Ticket size={16} className="mr-2" />
                         <span>Bookings</span>
                       </Link>
-                      <Link to="/settings" className="flex items-center px-4 py-2 hover:bg-gray-100 transition-colors">
+                      {/* <Link to="/settings" className="flex items-center px-4 py-2 hover:bg-gray-100 transition-colors">
                         <Settings size={16} className="mr-2" />
                         <span>Settings</span>
-                      </Link>
+                      </Link> */}
                       <button onClick={handleLogout} className="flex items-center w-full px-4 py-2 hover:bg-gray-100 transition-colors">
                         <LogOut size={16} className="mr-2" />
                         <span>Logout</span>
