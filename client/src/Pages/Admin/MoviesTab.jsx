@@ -85,7 +85,12 @@ function MoviesTab({ setModalType, setShowModal, setEditingItem, refreshKey }) {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {movies.map((movie) => (
             <div key={movie._id} className="bg-white rounded-lg shadow-md overflow-hidden flex flex-col">
-              <img src={movie.movieImage} alt={movie.title} className="w-full h-48 object-cover" onError={(e) => (e.target.src = 'https://via.placeholder.com/150')} />
+              <img
+                src={movie.movieImage}
+                alt={movie.title}
+                className="w-full h-48 object-cover"
+                onError={(e) => (e.target.src = 'https://via.placeholder.com/150')}
+              />
               <div className="p-4 flex-1 flex flex-col justify-between">
                 <div>
                   <h3 className="text-lg font-semibold mb-2 truncate">{movie.title}</h3>
@@ -129,14 +134,13 @@ function MoviesTab({ setModalType, setShowModal, setEditingItem, refreshKey }) {
         <ShowtimeModal
           movie={selectedMovie}
           setShowtimeModal={setShowtimeModal}
-          refresh={() => fetchMovies()}
+          refresh={fetchMovies}
         />
       )}
     </motion.div>
   );
 }
 
-// New Showtime Modal Component
 function ShowtimeModal({ movie, setShowtimeModal, refresh }) {
   const [theaters, setTheaters] = useState([]);
   const [screens, setScreens] = useState([]);
