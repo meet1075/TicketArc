@@ -30,7 +30,7 @@ const updateScreen= asyncHandler(async(req,res)=>{
             new:true
         }
     )
-    if(!updateScreen){
+    if(!updatedScreen){
         throw new ApiErrors(404,"Screen updation failed")
     }
     return res
