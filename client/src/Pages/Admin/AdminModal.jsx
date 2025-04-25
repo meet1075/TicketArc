@@ -12,6 +12,7 @@ function AdminModal({ showModal, setShowModal, modalType, editingItem, setEditin
     description: '',
     language: '',
     releaseDate: '',
+    rating: 1,
     name: '',
     location: { city: '', state: '' },
     screens: [],
@@ -23,17 +24,26 @@ function AdminModal({ showModal, setShowModal, modalType, editingItem, setEditin
   });
   const [error, setError] = useState(null);
 
+  // Predefined options for genres and languages
+  const genreOptions = [
+    'Action', 'Comedy', 'Drama', 'Horror', 'Sci-Fi', 'Romance', 'Thriller', 'Adventure', 'Animation', 'Documentary'
+  ];
+  const languageOptions = [
+    'English', 'Spanish', 'French', 'Hindi', 'Mandarin', 'Tamil', 'Telugu', 'Korean', 'Japanese', 'German'
+  ];
+
   useEffect(() => {
     if (editingItem) {
       if (modalType === 'movie') {
         setFormData({
           title: editingItem.title || '',
           movieImage: null,
-          genre: Array.isArray(editingItem.genre) ? editingItem.genre.join(', ') : editingItem.genre || '',
+          genre: Array.isArray(editingItem.genre) ? editingItem.genre[0] || '' : (editingItem.genre ? editingItem.genre.split(',')[0].trim() : ''),
           duration: editingItem.duration || '',
           description: editingItem.description || '',
           language: editingItem.language || '',
           releaseDate: editingItem.releaseDate ? editingItem.releaseDate.split('T')[0] : '',
+          rating: editingItem.rating || 1,
           name: '',
           location: { city: '', state: '' },
           screens: [],
@@ -52,6 +62,7 @@ function AdminModal({ showModal, setShowModal, modalType, editingItem, setEditin
           description: '',
           language: '',
           releaseDate: '',
+          rating: 1,
           name: editingItem.name || '',
           location: editingItem.location || { city: '', state: '' },
           screens: editingItem.screens || [],
@@ -70,6 +81,7 @@ function AdminModal({ showModal, setShowModal, modalType, editingItem, setEditin
           description: '',
           language: '',
           releaseDate: '',
+          rating: 1,
           name: '',
           location: { city: '', state: '' },
           screens: [],
@@ -89,6 +101,7 @@ function AdminModal({ showModal, setShowModal, modalType, editingItem, setEditin
         description: '',
         language: '',
         releaseDate: '',
+        rating: 1,
         name: '',
         location: { city: '', state: '' },
         screens: [],
@@ -130,11 +143,12 @@ function AdminModal({ showModal, setShowModal, modalType, editingItem, setEditin
       data = new FormData();
       data.append('title', formData.title);
       if (formData.movieImage) data.append('movieImage', formData.movieImage);
-      data.append('genre', formData.genre.split(',').map((g) => g.trim()));
+      data.append('genre', formData.genre);
       data.append('duration', formData.duration);
       data.append('description', formData.description);
       data.append('language', formData.language);
       data.append('releaseDate', formData.releaseDate);
+      data.append('rating', parseFloat(formData.rating));
     } else if (modalType === 'theater') {
       url = editingItem
         ? `http://localhost:3000/api/v1/theater/updateTheater/${editingItem._id}`
@@ -185,6 +199,7 @@ function AdminModal({ showModal, setShowModal, modalType, editingItem, setEditin
       description: '',
       language: '',
       releaseDate: '',
+      rating: 1,
       name: '',
       location: { city: '', state: '' },
       screens: [],
@@ -227,50 +242,151 @@ function AdminModal({ showModal, setShowModal, modalType, editingItem, setEditin
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
-                      <input type="text" name="title" value={formData.title} onChange={handleInputChange} required className="w-full p-2 border rounded-md" />
+                      <input
+                        type="text"
+                        name="title"
+                        value={formData.title}
+                        onChange={handleInputChange}
+                        required
+                        className="w-full p-2 border rounded-md"
+                      />
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Poster Image</label>
-                      <input type="file" name="movieImage" onChange={handleInputChange} accept="image/*" className="w-full p-2 border rounded-md" />
+                      <input
+                        type="file"
+                        name="movieImage"
+                        onChange={handleInputChange}
+                        accept="image/*"
+                        className="w-full p-2 border rounded-md"
+                      />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Genre (comma-separated)</label>
-                      <input type="text" name="genre" value={formData.genre} onChange={handleInputChange} required className="w-full p-2 border rounded-md" />
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Genre</label>
+                      <select
+                        name="genre"
+                        value={formData.genre}
+                        onChange={handleInputChange}
+                        required
+                        className="w-full p-2 border rounded-md"
+                      >
+                        {formData.genre === '' && <option value="">Select Genre</option>}
+                        {genreOptions.map((genre) => (
+                          <option key={genre} value={genre}>
+                            {genre}
+                          </option>
+                        ))}
+                      </select>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Duration (minutes)</label>
-                      <input type="number" name="duration" value={formData.duration} onChange={handleInputChange} required className="w-full p-2 border rounded-md" />
+                      <input
+                        type="number"
+                        name="duration"
+                        value={formData.duration}
+                        onChange={handleInputChange}
+                        required
+                        className="w-full p-2 border rounded-md"
+                      />
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Language</label>
-                      <input type="text" name="language" value={formData.language} onChange={handleInputChange} required className="w-full p-2 border rounded-md" />
+                      <select
+                        name="language"
+                        value={formData.language}
+                        onChange={handleInputChange}
+                        required
+                        className="w-full p-2 border rounded-md"
+                      >
+                        {formData.language === '' && <option value="">Select Language</option>}
+                        {languageOptions.map((language) => (
+                          <option key={language} value={language}>
+                            {language}
+                          </option>
+                        ))}
+                      </select>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Release Date</label>
-                      <input type="date" name="releaseDate" value={formData.releaseDate} onChange={handleInputChange} required className="w-full p-2 border rounded-md" />
+                      <input
+                        type="date"
+                        name="releaseDate"
+                        value={formData.releaseDate}
+                        onChange={handleInputChange}
+                        required
+                        className="w-full p-2 border rounded-md"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Rating (1-10)</label>
+                      <input
+                        type="number"
+                        name="rating"
+                        value={formData.rating}
+                        onChange={handleInputChange}
+                        required
+                        className="w-full p-2 border rounded-md"
+                        min="1"
+                        max="10"
+                        step="0.1"
+                      />
                     </div>
                     <div className="sm:col-span-2">
                       <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                      <textarea name="description" value={formData.description} onChange={handleInputChange} required rows="4" className="w-full p-2 border rounded-md" />
+                      <textarea
+                        name="description"
+                        value={formData.description}
+                        onChange={handleInputChange}
+                        required
+                        rows="4"
+                        className="w-full p-2 border rounded-md"
+                      />
                     </div>
                   </div>
                 ) : modalType === 'theater' ? (
                   <div className="space-y-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Theater Name</label>
-                      <input type="text" name="name" value={formData.name} onChange={handleInputChange} required className="w-full p-2 border rounded-md" />
+                      <input
+                        type="text"
+                        name="name"
+                        value={formData.name}
+                        onChange={handleInputChange}
+                        required
+                        className="w-full p-2 border rounded-md"
+                      />
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">City</label>
-                      <input type="text" name="city" value={formData.location.city} onChange={handleInputChange} required className="w-full p-2 border rounded-md" />
+                      <input
+                        type="text"
+                        name="city"
+                        value={formData.location.city}
+                        onChange={handleInputChange}
+                        required
+                        className="w-full p-2 border rounded-md"
+                      />
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">State</label>
-                      <input type="text" name="state" value={formData.location.state} onChange={handleInputChange} required className="w-full p-2 border rounded-md" />
+                      <input
+                        type="text"
+                        name="state"
+                        value={formData.location.state}
+                        onChange={handleInputChange}
+                        required
+                        className="w-full p-2 border rounded-md"
+                      />
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Facilities (comma-separated)</label>
-                      <input type="text" name="facilities" value={formData.facilities} onChange={handleInputChange} className="w-full p-2 border rounded-md" />
+                      <input
+                        type="text"
+                        name="facilities"
+                        value={formData.facilities}
+                        onChange={handleInputChange}
+                        className="w-full p-2 border rounded-md"
+                      />
                     </div>
                   </div>
                 ) : modalType === 'screen' ? (
@@ -313,10 +429,17 @@ function AdminModal({ showModal, setShowModal, modalType, editingItem, setEditin
                 ) : null}
 
                 <div className="flex justify-end space-x-4 pt-4">
-                  <button type="button" onClick={closeModal} className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors">
+                  <button
+                    type="button"
+                    onClick={closeModal}
+                    className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
+                  >
                     Cancel
                   </button>
-                  <button type="submit" className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors">
+                  <button
+                    type="submit"
+                    className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors"
+                  >
                     {editingItem?._id ? 'Save Changes' : `Add ${modalType === 'movie' ? 'Movie' : modalType === 'theater' ? 'Theater' : 'Screen'}`}
                   </button>
                 </div>
