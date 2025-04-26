@@ -16,6 +16,7 @@ import Bookings from './pages/Bookings';
 import AdminHome from './pages/AdminHome';
 import PrivacyPolicy from './pages/Policy';
 import TermsConditions from './pages/TermsConditions';
+import Payment from './pages/Payment.jsx';
 // import Settings from './pages/Settings';
 
 function App() {
@@ -33,7 +34,12 @@ function App() {
               <Route path="/profile" element={<Profile />} />
               <Route path="/about" element={<AboutUs />} />
               <Route path="/contact" element={<Contact />} />
+<<<<<<< HEAD
               <Route path="/theater-seating/:movieId/:screenId/:showtimeId" element={<TheaterSeating />} />
+=======
+              <Route path="/theater-seating/:movieId/:cinemaId/:showtime" element={<TheaterSeating />} />
+              <Route path="/payment" element={<Payment />} />
+>>>>>>> 7a93ac3b649aaff5a41b4a6f105d697db0be4ae2
               <Route path="/bookings" element={<Bookings />} />
               <Route path="/admin" element={<AdminHome />} />
               <Route path="/privacy-policy" element={<PrivacyPolicy />} />

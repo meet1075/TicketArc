@@ -4,8 +4,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 const MovieFilters = ({ onFilter, activeFilters }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const genres = ['Action', 'Comedy', 'Drama', 'Horror', 'Romance', 'Thriller', 'Sci-Fi'];
-  const languages = ['English', 'Hindi', 'Telugu', 'Tamil', 'Malayalam', 'Kannada'];
+  const genres = [
+    'Action', 'Comedy', 'Drama', 'Horror', 'Sci-Fi', 'Romance', 'Thriller', 'Adventure', 'Animation', 'Documentary'
+  ];
+  const languages = [
+    'English', 'Spanish', 'French', 'Hindi', 'Mandarin', 'Tamil', 'Telugu', 'Korean', 'Japanese', 'German'
+  ];
 
   const handleFilterClick = (type, value) => {
     const newFilters = {

@@ -95,9 +95,10 @@ function MoviesTab({ setModalType, setShowModal, setEditingItem, refreshKey }) {
                 <div>
                   <h3 className="text-lg font-semibold mb-2 truncate">{movie.title}</h3>
                   <div className="space-y-1 text-gray-600 text-sm">
-                    <p>Genre: {Array.isArray(movie.genre) ? movie.genre.join(', ') : movie.genre}</p>
-                    <p>Language: {movie.language}</p>
+                    <p>Genre: {movie.genre || 'N/A'}</p>
+                    <p>Language: {movie.language || 'N/A'}</p>
                     <p>Duration: {movie.duration} mins</p>
+                    <p>Rating: {movie.rating || 'N/A'} / 10</p>
                     <p className="line-clamp-2">{movie.description}</p>
                   </div>
                 </div>
@@ -310,7 +311,7 @@ function ShowtimeModal({ movie, setShowtimeModal, refresh }) {
             <input
               type="number"
               name="pricePremium"
-              value={formData.pricePremium}
+              value={formData.priceRegular}
               onChange={handleInputChange}
               className="w-full p-2 border rounded-md"
               step="0.01"
