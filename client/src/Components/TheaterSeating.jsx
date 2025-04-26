@@ -2,64 +2,190 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { X, Check, ArrowLeft, CreditCard } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import axios from 'axios';
 
 const TheaterSeating = () => {
-  const { movieId, cinemaId, showtime } = useParams();
+  const { movieId, screenId, showtimeId } = useParams();
   const navigate = useNavigate();
   const [selectedSeats, setSelectedSeats] = useState([]);
   const [showMobileBooking, setShowMobileBooking] = useState(false);
+  const [seatLayout, setSeatLayout] = useState([]);
+  const [movieDetails, setMovieDetails] = useState({
+    title: '',
+    cinema: '',
+    location: '',
+  });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // Mock data - in a real app, this would come from your API
-  const movieDetails = {
-    title: "Inception",
-    cinema: "PVR Cinemas",
-    location: "City Mall, Downtown",
-    price: 250 // Price in Rupees
-  };
+  // Get JWT token from localStorage or your auth mechanism
+  const token = localStorage.getItem('accessToken'); // Use the correct key for your token
 
-  const rows = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
-  const seatsPerRow = 12;
-  const bookedSeats = ['A3', 'B5', 'B6', 'C4', 'D7', 'E2', 'F8', 'G1'];
+  // Axios instance with default headers
+  const api = axios.create({
+    baseURL: 'http://localhost:3000/api/v1', // Adjust to your backend base URL
+    headers: {
+      Authorization: token ? `Bearer ${token}` : '',
+    },
+  });
+
+  useEffect(() => {
+    const fetchSeatLayout = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        // Log parameters for debugging
+        console.log('movieId:', movieId, 'screenId:', screenId, 'showtimeId:', showtimeId);
+
+        // Validate parameters
+        if (!screenId || !showtimeId) {
+          throw new Error('Missing screenId or showtimeId parameters');
+        }
+
+        // Static movie details - Replace with actual API call if needed
+        setMovieDetails({
+          title: 'Inception',
+          cinema: 'PVR Cinemas',
+          location: 'City Mall, Downtown',
+        });
+
+        // Fetch seat layout for screen and showtime
+        const layoutResponse = await api.get(`/seat/layout/${screenId}/${showtimeId}`);
+        console.log('API Response:', JSON.stringify(layoutResponse.data, null, 2));
+
+        // Handle different response structures
+        let layoutData;
+        if (layoutResponse.data?.data?.layout && Array.isArray(layoutResponse.data.data.layout)) {
+          layoutData = layoutResponse.data.data.layout;
+        } else if (layoutResponse.data?.layout && Array.isArray(layoutResponse.data.layout)) {
+          layoutData = layoutResponse.data.layout;
+        } else {
+          // Handle empty layout gracefully
+          if (layoutResponse.data?.data?.layout === undefined || layoutResponse.data?.data?.layout?.length === 0) {
+            setError('No seats available for this screen and showtime.');
+            setSeatLayout([]);
+            return;
+          }
+          throw new Error('Invalid response structure: layout data missing or not an array');
+        }
+
+        setSeatLayout(layoutData);
+      } catch (err) {
+        console.error('Error fetching seat layout:', err);
+        if (err.response) {
+          // Handle HTTP errors
+          if (err.response.status === 401) {
+            setError('Please log in to view seat layout.');
+          } else if (err.response.status === 400) {
+            setError('Invalid screen or showtime. Please check your selection.');
+          } else if (err.response.status === 404) {
+            setError('No seats found for this screen or showtime.');
+          } else {
+            setError(`Failed to load seat layout: ${err.response.data?.message || 'Unknown error'}`);
+          }
+        } else {
+          setError(err.message || 'Failed to load seat layout. Please try again.');
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSeatLayout();
+  }, [screenId, showtimeId]);
 
   useEffect(() => {
     setShowMobileBooking(selectedSeats.length > 0);
   }, [selectedSeats]);
 
-  const handleSeatClick = (seatId) => {
-    if (bookedSeats.includes(seatId)) return;
+  const handleSeatClick = async (seatNumber, seatAvailabilityId) => {
+    const seat = seatLayout
+      .flatMap(row => row.seats)
+      .find(s => s.seatNumber === seatNumber);
 
-    setSelectedSeats(prev => {
-      if (prev.includes(seatId)) {
-        return prev.filter(seat => seat !== seatId);
-      } else if (prev.length < 6) {
-        return [...prev, seatId].sort();
-      }
-      return prev;
-    });
+    if (!seat?.isAvailable || seat.isReserved) return;
+
+    try {
+      await api.patch(`/seatAvailability/confirmSeatBooking/${seatAvailabilityId}`);
+      setSelectedSeats(prev => {
+        if (prev.includes(seatNumber)) {
+          return prev.filter(seat => seat !== seatNumber);
+        } else if (prev.length < 6) {
+          return [...prev, seatNumber].sort();
+        }
+        return prev;
+      });
+    } catch (err) {
+      console.error('Error reserving seat:', err);
+      setError(`Failed to reserve seat: ${err.response?.data?.message || err.message || 'Unknown error'}`);
+    }
   };
 
-  const getSeatStatus = (seatId) => {
-    if (bookedSeats.includes(seatId)) return 'booked';
-    if (selectedSeats.includes(seatId)) return 'selected';
+  const handleCancelSeat = async (seatNumber, seatAvailabilityId) => {
+    try {
+      await api.patch(`/seatAvailability/cancelSeatBooking/${seatAvailabilityId}`);
+      setSelectedSeats(prev => prev.filter(seat => seat !== seatNumber));
+    } catch (err) {
+      console.error('Error canceling seat:', err);
+      setError(`Failed to cancel seat reservation: ${err.response?.data?.message || err.message || 'Unknown error'}`);
+    }
+  };
+
+  const getSeatStatus = (seat) => {
+    if (!seat?.isAvailable || seat?.isReserved) return 'booked';
+    if (selectedSeats.includes(seat?.seatNumber)) return 'selected';
     return 'available';
   };
 
-  const getSeatPrice = (row) => {
-    return ['F', 'G', 'H'].includes(row) ? 300 : 250;
+  const getTotalAmount = () => {
+    return selectedSeats.reduce((total, seatNumber) => {
+      const row = seatLayout.find(r => r.seats.some(s => s.seatNumber === seatNumber));
+      return total + (row ? row.price : 250);
+    }, 0);
   };
 
-  const getTotalAmount = () => {
-    return selectedSeats.reduce((total, seat) => total + getSeatPrice(seat[0]), 0);
+  const handleProceedToPayment = () => {
+    navigate('/payment', {
+      state: {
+        movieTitle: movieDetails.title,
+        showtime: showtimeId,
+        seats: selectedSeats,
+        totalAmount: getTotalAmount(),
+        theater: movieDetails.cinema,
+        location: movieDetails.location,
+      },
+    });
   };
 
   const handleBack = () => {
     navigate(-1);
   };
 
+  if (loading) {
+    return <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">Loading...</div>;
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center text-red-500">
+        {error}
+      </div>
+    );
+  }
+
+  if (seatLayout.length === 0) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center text-gray-600 dark:text-gray-400">
+        No seats available for this screen and showtime.
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pt-16 transition-colors">
       {/* Back Button */}
-      <button 
+      <button
         onClick={handleBack}
         className="fixed top-20 left-4 z-10 bg-white dark:bg-gray-800 p-3 rounded-full shadow-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
         aria-label="Go back"
@@ -76,7 +202,7 @@ const TheaterSeating = () => {
             <span>•</span>
             <span>{movieDetails.location}</span>
             <span>•</span>
-            <span>{decodeURIComponent(showtime)}</span>
+            <span>{decodeURIComponent(showtimeId)}</span>
           </div>
         </div>
       </div>
@@ -109,36 +235,40 @@ const TheaterSeating = () => {
 
             {/* Seats */}
             <div className="grid gap-6 min-w-[320px]">
-              {rows.map((row) => (
-                <div key={row} className="flex items-center gap-2">
-                  <div className="w-8 text-center font-bold dark:text-white">{row}</div>
-                  <div className="flex-1 grid grid-cols-12 gap-1 md:gap-2">
-                    {Array.from({ length: seatsPerRow }, (_, i) => {
-                      const seatId = `${row}${i + 1}`;
-                      const status = getSeatStatus(seatId);
-                      return (
-                        <button
-                          key={seatId}
-                          onClick={() => handleSeatClick(seatId)}
-                          disabled={status === 'booked'}
-                          className={`
-                            aspect-square min-w-[24px] md:min-w-[32px] rounded-t-lg flex items-center justify-center text-sm font-medium
-                            transition-all duration-200 transform hover:scale-110 touch-manipulation
-                            ${status === 'booked' ? 'bg-red-500 cursor-not-allowed dark:bg-red-700' : ''}
-                            ${status === 'selected' ? 'bg-gray-500 text-white' : ''}
-                            ${status === 'available' ? 'bg-green-500 dark:bg-green-600 hover:bg-green-600 dark:hover:bg-green-700' : ''}
-                          `}
-                          aria-label={`Seat ${seatId}`}
-                        >
-                          {status === 'selected' && <Check className="w-3 h-3 md:w-4 md:h-4" />}
-                          {status === 'booked' && <X className="w-3 h-3 md:w-4 md:h-4" />}
-                          {status === 'available' && i + 1}
-                        </button>
-                      );
-                    })}
+              {seatLayout.map((row) => (
+                <div key={row.row} className="flex items-center gap-2">
+                  <div className="w-8 text-center font-bold dark:text-white">{row.row}</div>
+                  <div className="flex-1 grid gap-1 md:gap-2" style={{ gridTemplateColumns: `repeat(${row.seats.length}, minmax(0, 1fr))` }}>
+                    {row.seats.map((seat) => (
+                      <button
+                        key={seat.seatNumber}
+                        onClick={() =>
+                          selectedSeats.includes(seat.seatNumber)
+                            ? handleCancelSeat(seat.seatNumber, seat.seatAvailabilityId)
+                            : handleSeatClick(seat.seatNumber, seat.seatAvailabilityId)
+                        }
+                        disabled={
+                          !seat.isAvailable ||
+                          (seat.isReserved && !selectedSeats.includes(seat.seatNumber)) ||
+                          !seat.seatAvailabilityId
+                        }
+                        className={`
+                          aspect-square min-w-[24px] md:min-w-[32px] rounded-t-lg flex items-center justify-center text-sm font-medium
+                          transition-all duration-200 transform hover:scale-110 touch-manipulation
+                          ${!seat.isAvailable || (seat.isReserved && !selectedSeats.includes(seat.seatNumber)) ? 'bg-red-500 cursor-not-allowed dark:bg-red-700' : ''}
+                          ${selectedSeats.includes(seat.seatNumber) ? 'bg-gray-500 text-white' : ''}
+                          ${seat.isAvailable && (!seat.isReserved || selectedSeats.includes(seat.seatNumber)) && !selectedSeats.includes(seat.seatNumber) ? 'bg-green-500 dark:bg-green-600 hover:bg-green-600 dark:hover:bg-green-700' : ''}
+                        `}
+                        aria-label={`Seat ${seat.seatNumber}`}
+                      >
+                        {selectedSeats.includes(seat.seatNumber) && <Check className="w-3 h-3 md:w-4 md:h-4" />}
+                        {(!seat.isAvailable || (seat.isReserved && !selectedSeats.includes(seat.seatNumber))) && <X className="w-3 h-3 md:w-4 md:h-4" />}
+                        {seat.isAvailable && (!seat.isReserved || selectedSeats.includes(seat.seatNumber)) && !selectedSeats.includes(seat.seatNumber) && seat.seatNumber.slice(1)}
+                      </button>
+                    ))}
                   </div>
                   <div className="w-16 text-right text-sm text-gray-600 dark:text-gray-400">
-                    ₹{getSeatPrice(row)}
+                    ₹{row.price}
                   </div>
                 </div>
               ))}
@@ -165,7 +295,7 @@ const TheaterSeating = () => {
               <button
                 disabled={selectedSeats.length === 0}
                 className="px-6 py-3 bg-red-500 text-white rounded-lg disabled:bg-gray-400 disabled:cursor-not-allowed hover:bg-red-600 transition-colors flex items-center space-x-2"
-                onClick={() => {/* Handle payment */}}
+                onClick={handleProceedToPayment}
               >
                 <CreditCard size={20} />
                 <span>Proceed to Payment</span>
@@ -191,7 +321,7 @@ const TheaterSeating = () => {
               </div>
               <button
                 className="px-6 py-3 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors flex items-center space-x-2"
-                onClick={() => {/* Handle payment */}}
+                onClick={handleProceedToPayment}
               >
                 <CreditCard size={20} />
                 <span>Book {selectedSeats.length} Seats</span>

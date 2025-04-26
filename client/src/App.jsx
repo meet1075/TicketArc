@@ -33,7 +33,7 @@ function App() {
               <Route path="/profile" element={<Profile />} />
               <Route path="/about" element={<AboutUs />} />
               <Route path="/contact" element={<Contact />} />
-              <Route path="/theater-seating/:movieId/:cinemaId/:showtime" element={<TheaterSeating />} />
+              <Route path="/theater-seating/:movieId/:screenId/:showtimeId" element={<TheaterSeating />} />
               <Route path="/bookings" element={<Bookings />} />
               <Route path="/admin" element={<AdminHome />} />
               <Route path="/privacy-policy" element={<PrivacyPolicy />} />

@@ -68,6 +68,7 @@ function MovieDetails() {
             time: new Date(st.showDateTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
             showtimeId: st._id,
             price: st.price?.Regular || 10, // Default price if not set
+            screenId: st.screenId?._id || st.screenId, // Ensure screenId is included
           })),
         };
       }).filter((t) => t.showtimes.length > 0);
@@ -84,13 +85,13 @@ function MovieDetails() {
     setSelectedTime(null);
   };
 
-  const handleTimeSelect = (time, showtimeId) => {
+  const handleTimeSelect = (time, showtimeId, screenId) => {
     if (!isLoggedIn) {
       setShowLoginPrompt(true);
       return;
     }
     setSelectedTime(time);
-    navigate(`/theater-seating/${id}/${showtimeId}/${encodeURIComponent(time)}`);
+    navigate(`/theater-seating/${id}/${screenId}/${showtimeId}`);
   };
 
   const handleLogin = () => {
@@ -188,17 +189,17 @@ function MovieDetails() {
                         <div className="mt-4">
                           <p className="text-sm font-medium mb-2">Select Showtime</p>
                           <div className="flex flex-wrap gap-2">
-                            {theater.showtimes.map((showtime) => (
+                            {theater.showtimes.map((st) => (
                               <button
-                                key={showtime.showtimeId}
-                                onClick={() => handleTimeSelect(showtime.time, showtime.showtimeId)}
+                                key={st.showtimeId}
+                                onClick={() => handleTimeSelect(st.time, st.showtimeId, st.screenId)}
                                 className={`px-4 py-2 rounded-lg transition-colors ${
-                                  selectedTime === showtime.time
+                                  selectedTime === st.time
                                     ? 'bg-red-500 text-white'
                                     : 'bg-gray-100 hover:bg-red-500 hover:text-white'
                                 }`}
                               >
-                                {showtime.time} (${showtime.price})
+                                {st.time} (${st.price})
                               </button>
                             ))}
                           </div>
