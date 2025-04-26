@@ -30,38 +30,43 @@ const TheaterSeating = () => {
   });
 
   useEffect(() => {
-    const fetchSeatLayout = async () => {
+    const fetchAllDetails = async () => {
       try {
         setLoading(true);
         setError(null);
 
-        // Log parameters for debugging
-        console.log('movieId:', movieId, 'screenId:', screenId, 'showtimeId:', showtimeId);
+        // Fetch movie details
+        const movieResponse = await api.get(`/movie/getMovie/${movieId}`);
+        const movieData = movieResponse.data.data;
 
-        // Validate parameters
-        if (!screenId || !showtimeId) {
-          throw new Error('Missing screenId or showtimeId parameters');
-        }
+        // Fetch showtime details
+        const showtimeResponse = await api.get(`/showtime/getShowtime/${showtimeId}`);
+        const showtimeData = showtimeResponse.data.data;
+        const screenIdFromShowtime = showtimeData.screenId;
 
-        // Static movie details - Replace with actual API call if needed
+        // Fetch screen details
+        const screenResponse = await api.get(`/screen/getScreen/${screenIdFromShowtime}`);
+        const screenData = screenResponse.data.data;
+        const theaterIdFromScreen = screenData.theaterId;
+
+        // Fetch theater details
+        const theaterResponse = await api.get(`/theater/getTheater/${theaterIdFromScreen}`);
+        const theaterData = theaterResponse.data.data;
+
         setMovieDetails({
-          title: 'Inception',
-          cinema: 'PVR Cinemas',
-          location: 'City Mall, Downtown',
+          title: movieData.title,
+          cinema: theaterData.name,
+          location: `${theaterData.location.city}, ${theaterData.location.state}`,
         });
 
         // Fetch seat layout for screen and showtime
         const layoutResponse = await api.get(`/seat/layout/${screenId}/${showtimeId}`);
-        console.log('API Response:', JSON.stringify(layoutResponse.data, null, 2));
-
-        // Handle different response structures
         let layoutData;
         if (layoutResponse.data?.data?.layout && Array.isArray(layoutResponse.data.data.layout)) {
           layoutData = layoutResponse.data.data.layout;
         } else if (layoutResponse.data?.layout && Array.isArray(layoutResponse.data.layout)) {
           layoutData = layoutResponse.data.layout;
         } else {
-          // Handle empty layout gracefully
           if (layoutResponse.data?.data?.layout === undefined || layoutResponse.data?.data?.layout?.length === 0) {
             setError('No seats available for this screen and showtime.');
             setSeatLayout([]);
@@ -69,18 +74,16 @@ const TheaterSeating = () => {
           }
           throw new Error('Invalid response structure: layout data missing or not an array');
         }
-
         setSeatLayout(layoutData);
       } catch (err) {
-        console.error('Error fetching seat layout:', err);
+        console.error('Error fetching seat layout or movie details:', err);
         if (err.response) {
-          // Handle HTTP errors
           if (err.response.status === 401) {
             setError('Please log in to view seat layout.');
           } else if (err.response.status === 400) {
             setError('Invalid screen or showtime. Please check your selection.');
           } else if (err.response.status === 404) {
-            setError('No seats found for this screen or showtime.');
+            setError('No seats found for this screen and showtime.');
           } else {
             setError(`Failed to load seat layout: ${err.response.data?.message || 'Unknown error'}`);
           }
@@ -92,8 +95,8 @@ const TheaterSeating = () => {
       }
     };
 
-    fetchSeatLayout();
-  }, [screenId, showtimeId]);
+    fetchAllDetails();
+  }, [screenId, showtimeId, movieId]);
 
   useEffect(() => {
     setShowMobileBooking(selectedSeats.length > 0);
@@ -209,14 +212,12 @@ const TheaterSeating = () => {
 
       {/* Header with Movie Details */}
       <div className="bg-gradient-to-r from-red-600 to-red-800 text-white py-8">
-        <div className="container mx-auto px-4">
-          <h1 className="text-2xl font-bold mb-2">{movieDetails.title}</h1>
-          <div className="flex flex-wrap items-center gap-2 text-gray-100">
+        <div className="container mx-auto px-4 flex flex-col items-center justify-center">
+          <h1 className="text-2xl font-bold mb-2 text-center">{movieDetails.title}</h1>
+          <div className="flex flex-wrap items-center gap-2 text-gray-100 justify-center">
             <span>{movieDetails.cinema}</span>
             <span>•</span>
             <span>{movieDetails.location}</span>
-            <span>•</span>
-            <span>{decodeURIComponent(showtimeId)}</span>
           </div>
         </div>
       </div>

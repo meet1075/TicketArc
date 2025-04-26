@@ -21,6 +21,8 @@ function AdminModal({ showModal, setShowModal, modalType, editingItem, setEditin
     screenType: '2D',
     totalSeats: '',
     theaterId: '',
+    numberOfRows: '',
+    numberOfColumns: '',
   });
   const [error, setError] = useState(null);
 
@@ -52,6 +54,8 @@ function AdminModal({ showModal, setShowModal, modalType, editingItem, setEditin
           screenType: '2D',
           totalSeats: '',
           theaterId: '',
+          numberOfRows: '',
+          numberOfColumns: '',
         });
       } else if (modalType === 'theater') {
         setFormData({
@@ -71,6 +75,8 @@ function AdminModal({ showModal, setShowModal, modalType, editingItem, setEditin
           screenType: '2D',
           totalSeats: '',
           theaterId: '',
+          numberOfRows: '',
+          numberOfColumns: '',
         });
       } else if (modalType === 'screen') {
         setFormData({
@@ -90,6 +96,8 @@ function AdminModal({ showModal, setShowModal, modalType, editingItem, setEditin
           screenType: editingItem.screenType || '2D',
           totalSeats: editingItem.totalSeats || '',
           theaterId: editingItem.theaterId || '',
+          numberOfRows: '',
+          numberOfColumns: '',
         });
       }
     } else {
@@ -110,6 +118,8 @@ function AdminModal({ showModal, setShowModal, modalType, editingItem, setEditin
         screenType: '2D',
         totalSeats: '',
         theaterId: editingItem?.theaterId || '',
+        numberOfRows: '',
+        numberOfColumns: '',
       });
     }
   }, [editingItem, modalType]);
@@ -125,6 +135,14 @@ function AdminModal({ showModal, setShowModal, modalType, editingItem, setEditin
       setFormData((prev) => ({
         ...prev,
         [name]: files ? files[0] : value,
+        ...(name === 'numberOfRows' || name === 'numberOfColumns'
+          ? {
+              totalSeats:
+                name === 'numberOfRows'
+                  ? value * (prev.numberOfColumns || 0)
+                  : (prev.numberOfRows || 0) * value,
+            }
+          : {}),
       }));
     }
   };
@@ -165,7 +183,9 @@ function AdminModal({ showModal, setShowModal, modalType, editingItem, setEditin
       data = {
         screenNumber: formData.screenNumber,
         screenType: formData.screenType,
-        totalSeats: formData.totalSeats,
+        numberOfRows: formData.numberOfRows,
+        numberOfColumns: formData.numberOfColumns,
+        totalSeats: formData.numberOfRows * formData.numberOfColumns,
       };
     }
 
@@ -208,6 +228,8 @@ function AdminModal({ showModal, setShowModal, modalType, editingItem, setEditin
       screenType: '2D',
       totalSeats: '',
       theaterId: '',
+      numberOfRows: '',
+      numberOfColumns: '',
     });
   };
 
@@ -415,14 +437,41 @@ function AdminModal({ showModal, setShowModal, modalType, editingItem, setEditin
                       </select>
                     </div>
                     <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Number of Rows</label>
+                      <input
+                        type="number"
+                        name="numberOfRows"
+                        value={formData.numberOfRows || ''}
+                        onChange={handleInputChange}
+                        required
+                        min="1"
+                        className="w-full p-2 border rounded-md"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Number of Columns</label>
+                      <input
+                        type="number"
+                        name="numberOfColumns"
+                        value={formData.numberOfColumns || ''}
+                        onChange={handleInputChange}
+                        required
+                        min="1"
+                        className="w-full p-2 border rounded-md"
+                      />
+                    </div>
+                    <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Total Seats</label>
                       <input
                         type="number"
                         name="totalSeats"
-                        value={formData.totalSeats}
-                        onChange={handleInputChange}
-                        required
-                        className="w-full p-2 border rounded-md"
+                        value={
+                          formData.numberOfRows && formData.numberOfColumns
+                            ? formData.numberOfRows * formData.numberOfColumns
+                            : ''
+                        }
+                        readOnly
+                        className="w-full p-2 border rounded-md bg-gray-100"
                       />
                     </div>
                   </div>
