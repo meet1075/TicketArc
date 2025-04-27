@@ -208,8 +208,8 @@ function ShowtimeModal({ movie, setShowtimeModal, refresh }) {
           status: formData.status,
           price: {
             Regular: parseFloat(formData.priceRegular),
-            Premium: parseFloat(formData.pricePremium),
-          },
+            Premium: parseFloat(formData.pricePremium)
+          }
         },
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -303,6 +303,7 @@ function ShowtimeModal({ movie, setShowtimeModal, refresh }) {
               onChange={handleInputChange}
               className="w-full p-2 border rounded-md"
               step="0.01"
+              min="0"
               required
             />
           </div>
@@ -311,10 +312,11 @@ function ShowtimeModal({ movie, setShowtimeModal, refresh }) {
             <input
               type="number"
               name="pricePremium"
-              value={formData.priceRegular}
+              value={formData.pricePremium}
               onChange={handleInputChange}
               className="w-full p-2 border rounded-md"
               step="0.01"
+              min="0"
               required
             />
           </div>

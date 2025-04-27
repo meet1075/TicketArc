@@ -317,52 +317,57 @@ import { SeatAvailability } from "../models/seatAvailability.model.js";
 
 const addSeatsForScreen = asyncHandler(async (req, res) => {
   const { screenId } = req.params;
-  let { rowNames, seatTypes } = req.body;
+  const { rowNames, seatTypes, numberOfColumns, numberOfRows, totalSeats, premiumRows, regularPrice, premiumPrice } = req.body;
 
   if (!mongoose.isValidObjectId(screenId)) {
     throw new ApiErrors(400, "Invalid screenId");
   }
 
-  // Get the screen details to get the exact number of rows and columns
+  // Get the screen details to verify
   const screen = await Screen.findById(screenId);
   if (!screen) {
     throw new ApiErrors(404, "Screen not found");
   }
 
-  const totalRows = screen.numberOfRows;
-  const seatsPerRow = screen.numberOfColumns;
-
-  if (!rowNames || !Array.isArray(rowNames) || rowNames.length !== totalRows) {
-    rowNames = Array.from({ length: totalRows }, (_, i) => String.fromCharCode(65 + i));
+  if (!rowNames || !Array.isArray(rowNames) || rowNames.length !== numberOfRows) {
+    throw new ApiErrors(400, "rowNames must be an array of length equal to numberOfRows");
   }
 
-  if (!seatTypes || !Array.isArray(seatTypes) || seatTypes.length !== totalRows) {
-    throw new ApiErrors(400, "seatTypes must be an array of length equal to totalRows");
+  if (!seatTypes || !Array.isArray(seatTypes) || seatTypes.length !== numberOfRows) {
+    throw new ApiErrors(400, "seatTypes must be an array of length equal to numberOfRows");
   }
 
   let seats = [];
-  for (let row = 0; row < totalRows; row++) {
-    for (let col = 1; col <= seatsPerRow; col++) {
+  for (let row = 0; row < numberOfRows; row++) {
+    for (let col = 1; col <= numberOfColumns; col++) {
       const seatNumber = `${rowNames[row]}${col}`;
+      const isPremium = seatTypes[row].toLowerCase() === 'premium';
       seats.push({
         seatNumber,
-        seatType: seatTypes[row],
+        seatType: seatTypes[row].toLowerCase(),
         screenId,
+        price: isPremium ? premiumPrice : regularPrice,
+        status: 'available'
       });
     }
   }
 
   try {
     const createdSeats = await Seat.insertMany(seats);
-    console.log(`✅ ${totalRows * seatsPerRow} seats created for Screen ${screenId}`);
+    console.log(`✅ ${totalSeats} seats created for Screen ${screenId}`);
 
     return res.status(201).json({
-      message: `${totalRows * seatsPerRow} seats created for Screen ${screenId}`,
-      seatsCreated: createdSeats.length,
+      success: true,
+      statusCode: 201,
+      message: `${totalSeats} seats created for Screen ${screenId}`,
+      data: {
+        seatsCreated: createdSeats.length,
+        seats: createdSeats
+      }
     });
   } catch (error) {
     console.error("Error inserting seats:", error);
-    res.status(500).json({ error: "Failed to create seats" });
+    throw new ApiErrors(500, "Failed to create seats");
   }
 });
 
@@ -448,8 +453,14 @@ const getSeatLayoutForShowtime = asyncHandler(async (req, res) => {
       throw new ApiErrors(404, "Screen not found");
     }
 
+    // Fetch the showtime to get seat prices
+    const showtime = await ShowTime.findById(showtimeId);
+    if (!showtime) {
+      throw new ApiErrors(404, "Showtime not found");
+    }
+    const showtimePrices = showtime.price || { Regular: 0, Premium: 0 };
+
     // Get the number of rows and columns from the screen model
-    // These should be stored in the screen model when creating the screen
     const totalRows = screen.numberOfRows || Math.ceil(Math.sqrt(screen.totalSeats));
     const seatsPerRow = screen.numberOfColumns || Math.ceil(screen.totalSeats / totalRows);
     
@@ -474,20 +485,21 @@ const getSeatLayoutForShowtime = asyncHandler(async (req, res) => {
         const seatNumber = `${rowNames[row]}${col}`;
         const existingSeat = existingSeatsMap.get(seatNumber);
         const availability = availabilityMap.get(seatNumber);
-
+        const seatType = existingSeat?.seatType || "Regular";
         rowSeats.push({
           seatNumber,
-          seatType: existingSeat?.seatType || "Regular",
+          seatType,
           isAvailable: availability?.isAvailable ?? true,
           isReserved: availability?.isReserved ?? false,
           reservationExpiry: availability?.reservationExpiry || null,
           seatAvailabilityId: availability?._id || null,
+          price: seatType === "Premium" ? showtimePrices.Premium : showtimePrices.Regular
         });
       }
       seatLayout.push({
         row: rowNames[row],
         seats: rowSeats,
-        price: rowSeats[0]?.seatType === "Premium" ? 300 : 250,
+        isPremiumRow: rowSeats[0]?.seatType === "Premium"
       });
     }
   

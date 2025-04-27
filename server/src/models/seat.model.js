@@ -7,13 +7,22 @@ const seatSchema = new Schema({
     },
     seatType: {
         type: String,
-        enum: ["Regular", "Premium"],
+        enum: ["regular", "premium"],
         required: true
     },
     screenId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Screen",
         required: true
+    },
+    price: {
+        type: Number,
+        required: true
+    },
+    status: {
+        type: String,
+        enum: ["available", "booked", "reserved"],
+        default: "available"
     }
 },{timestamps:true});
 

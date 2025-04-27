@@ -5,24 +5,27 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 function AdminModal({ showModal, setShowModal, modalType, editingItem, setEditingItem, refresh }) {
   const [formData, setFormData] = useState({
-    title: '',
-    movieImage: null,
-    genre: '',
-    duration: '',
-    description: '',
-    language: '',
-    releaseDate: '',
-    rating: 1,
     name: '',
-    location: { city: '', state: '' },
-    screens: [],
-    facilities: '',
+    location: '',
+    capacity: '',
+    numberOfRows: '',
+    numberOfColumns: '',
+    premiumRows: [],
+    price: '',
+    premiumPrice: '',
+    regularPrice: '',
+    description: '',
+    duration: '',
+    releaseDate: '',
+    genre: '',
+    language: '',
+    rating: '',
+    poster: null,
+    trailer: null,
+    theaterId: '',
     screenNumber: '',
     screenType: '2D',
     totalSeats: '',
-    theaterId: '',
-    numberOfRows: '',
-    numberOfColumns: '',
   });
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -57,6 +60,10 @@ function AdminModal({ showModal, setShowModal, modalType, editingItem, setEditin
           theaterId: '',
           numberOfRows: '',
           numberOfColumns: '',
+          premiumRows: [],
+          movieId: '',
+          showtime: '',
+          price: { Premium: '', Regular: '' },
         });
       } else if (modalType === 'theater') {
         setFormData({
@@ -78,6 +85,10 @@ function AdminModal({ showModal, setShowModal, modalType, editingItem, setEditin
           theaterId: '',
           numberOfRows: '',
           numberOfColumns: '',
+          premiumRows: [],
+          movieId: '',
+          showtime: '',
+          price: { Premium: '', Regular: '' },
         });
       } else if (modalType === 'screen') {
         setFormData({
@@ -97,8 +108,12 @@ function AdminModal({ showModal, setShowModal, modalType, editingItem, setEditin
           screenType: editingItem.screenType || '2D',
           totalSeats: editingItem.totalSeats || '',
           theaterId: editingItem.theaterId || '',
-          numberOfRows: '',
-          numberOfColumns: '',
+          numberOfRows: editingItem.numberOfRows || '',
+          numberOfColumns: editingItem.numberOfColumns || '',
+          premiumRows: editingItem.premiumRows || [],
+          movieId: '',
+          showtime: '',
+          price: editingItem.price || { Premium: '', Regular: '' },
         });
       }
     } else {
@@ -121,6 +136,10 @@ function AdminModal({ showModal, setShowModal, modalType, editingItem, setEditin
         theaterId: editingItem?.theaterId || '',
         numberOfRows: '',
         numberOfColumns: '',
+        premiumRows: [],
+        movieId: '',
+        showtime: '',
+        price: { Premium: '', Regular: '' },
       });
     }
   }, [editingItem, modalType]);
@@ -151,86 +170,128 @@ function AdminModal({ showModal, setShowModal, modalType, editingItem, setEditin
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError(null);
+    setError('');
 
     try {
-      let response;
-      const formDataToSend = new FormData();
+      let url = '';
+      let data = {};
 
       if (modalType === 'movie') {
-        let url = editingItem
-          ? `http://localhost:3000/api/v1/movie/update/${editingItem._id}`
-          : 'http://localhost:3000/api/v1/movie/addMovie';
-        formDataToSend.append('title', formData.title);
-        if (formData.movieImage) formDataToSend.append('movieImage', formData.movieImage);
-        formDataToSend.append('genre', formData.genre);
-        formDataToSend.append('duration', formData.duration);
-        formDataToSend.append('description', formData.description);
-        formDataToSend.append('language', formData.language);
-        formDataToSend.append('releaseDate', formData.releaseDate);
-        formDataToSend.append('rating', parseFloat(formData.rating));
-
-        response = await axios({
-          method: editingItem?._id ? 'patch' : 'post',
-          url,
-          data: formDataToSend,
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
-            'Content-Type': 'multipart/form-data',
-          },
-          withCredentials: true,
+        url = editingItem?._id ? `http://localhost:3000/api/v1/movie/update/${editingItem._id}` : 'http://localhost:3000/api/v1/movie/addMovie';
+        const formDataToSend = new FormData();
+        Object.keys(formData).forEach(key => {
+          if (formData[key] !== null) {
+            formDataToSend.append(key, formData[key]);
+          }
         });
+        data = formDataToSend;
       } else if (modalType === 'theater') {
-        let url = editingItem
-          ? `http://localhost:3000/api/v1/theater/updateTheater/${editingItem._id}`
-          : 'http://localhost:3000/api/v1/theater/addTheater';
-        formDataToSend.append('name', formData.name);
-        formDataToSend.append('location[city]', formData.location.city);
-        formDataToSend.append('location[state]', formData.location.state);
-        formDataToSend.append('facilities', formData.facilities ? formData.facilities.split(',').map((f) => f.trim()) : []);
-
-        response = await axios({
-          method: editingItem?._id ? 'patch' : 'post',
-          url,
-          data: formDataToSend,
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
-            'Content-Type': 'application/json',
-          },
-          withCredentials: true,
-        });
+        url = editingItem?._id ? `http://localhost:3000/api/v1/theater/updateTheater/${editingItem._id}` : 'http://localhost:3000/api/v1/theater/addTheater';
+        data = {
+          name: formData.name,
+          location: formData.location,
+          capacity: formData.capacity,
+        };
       } else if (modalType === 'screen') {
-        let url = editingItem?._id
+        url = editingItem?._id 
           ? `http://localhost:3000/api/v1/screen/update/${editingItem._id}`
           : `http://localhost:3000/api/v1/theater/theaters/addScreen/${formData.theaterId}`;
-
-        // Prepare JSON payload
-        const screenPayload = {
+        
+        // Prepare screen data according to API requirements
+        data = {
           screenNumber: parseInt(formData.screenNumber, 10),
           screenType: formData.screenType,
           numberOfRows: parseInt(formData.numberOfRows, 10),
           numberOfColumns: parseInt(formData.numberOfColumns, 10),
           totalSeats: parseInt(formData.numberOfRows, 10) * parseInt(formData.numberOfColumns, 10),
+          premiumRows: formData.premiumRows.map(row => parseInt(row)),
           theaterId: formData.theaterId,
         };
 
-        response = await axios({
-          method: editingItem?._id ? 'patch' : 'post',
-          url,
-          data: screenPayload,
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
-            'Content-Type': 'application/json',
-          },
-          withCredentials: true,
-        });
+        try {
+          // Create or update the screen
+          const screenResponse = await axios[editingItem?._id ? 'put' : 'post'](url, data, {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
+              'Content-Type': 'application/json',
+            },
+            withCredentials: true,
+          });
+
+          console.log('Screen response:', screenResponse.data);
+
+          // Get the screen ID from the response
+          const screenId = editingItem?._id || screenResponse.data?.data?._id;
+          
+          if (!screenId) {
+            throw new Error('Failed to get screen ID from response');
+          }
+
+          // Create seat types array based on premium rows
+          const seatTypes = Array(parseInt(formData.numberOfRows)).fill('regular');
+          formData.premiumRows.forEach(rowNum => {
+            seatTypes[rowNum - 1] = 'premium';
+          });
+
+          // Generate row names (A, B, C, etc.)
+          const rowNames = Array.from({ length: parseInt(formData.numberOfRows) }, (_, i) => String.fromCharCode(65 + i));
+
+          // Prepare seat data
+          const seatData = {
+            screenId: screenId,
+            rowNames: rowNames,
+            seatTypes: seatTypes,
+            numberOfColumns: parseInt(formData.numberOfColumns),
+            numberOfRows: parseInt(formData.numberOfRows),
+            totalSeats: parseInt(formData.numberOfRows) * parseInt(formData.numberOfColumns),
+            premiumRows: formData.premiumRows.map(row => parseInt(row)),
+            regularPrice: parseInt(formData.regularPrice) || 100,
+            premiumPrice: parseInt(formData.premiumPrice) || 200
+          };
+
+          console.log('Adding seats with data:', JSON.stringify(seatData, null, 2));
+
+          try {
+            // Add seats for the screen
+            const seatResponse = await axios.post(`http://localhost:3000/api/v1/seat/addSeats/${screenId}`, seatData, {
+              headers: {
+                Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
+                'Content-Type': 'application/json',
+              },
+              withCredentials: true,
+            });
+
+            console.log('Seat response:', seatResponse.data);
+
+            if (seatResponse.data.success && seatResponse.data.statusCode === 201) {
+              setShowModal(false);
+              if (refresh) refresh();
+            } else {
+              throw new Error(seatResponse.data.message || 'Failed to add seats');
+            }
+          } catch (error) {
+            console.error('Error adding seats:', error);
+            throw new Error(error.response?.data?.message || 'Failed to add seats');
+          }
+        } catch (error) {
+          console.error('Error creating screen or adding seats:', error);
+          setError(error.response?.data?.message || 'Failed to create screen or add seats');
+          setLoading(false);
+          return;
+        }
       }
 
+      const response = await axios[editingItem?._id ? 'put' : 'post'](url, data, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
+          'Content-Type': 'application/json',
+        },
+        withCredentials: true,
+      });
       setShowModal(false);
       if (refresh) refresh();
     } catch (err) {
-      setError(`Failed to ${editingItem?._id ? 'update' : 'add'} ${modalType}: ${err.response?.data?.message || err.message}`);
-      console.error('Error submitting form:', err.response || err);
+      setError(err.response?.data?.message || 'Something went wrong');
     } finally {
       setLoading(false);
     }
@@ -258,6 +319,10 @@ function AdminModal({ showModal, setShowModal, modalType, editingItem, setEditin
       theaterId: '',
       numberOfRows: '',
       numberOfColumns: '',
+      premiumRows: [],
+      movieId: '',
+      showtime: '',
+      price: { Premium: '', Regular: '' },
     });
   };
 
@@ -501,6 +566,33 @@ function AdminModal({ showModal, setShowModal, modalType, editingItem, setEditin
                         readOnly
                         className="w-full p-2 border rounded-md bg-gray-100"
                       />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Premium Rows</label>
+                      <div className="space-y-2">
+                        {formData.numberOfRows > 0 && Array.from({ length: formData.numberOfRows }, (_, i) => (
+                          <div key={i} className="flex items-center">
+                            <input
+                              type="checkbox"
+                              id={`premiumRow${i}`}
+                              checked={formData.premiumRows.includes(i + 1)}
+                              onChange={(e) => {
+                                const rowNum = i + 1;
+                                setFormData(prev => ({
+                                  ...prev,
+                                  premiumRows: e.target.checked
+                                    ? [...prev.premiumRows, rowNum]
+                                    : prev.premiumRows.filter(r => r !== rowNum)
+                                }));
+                              }}
+                              className="mr-2"
+                            />
+                            <label htmlFor={`premiumRow${i}`} className="text-sm">
+                              Row {String.fromCharCode(65 + i)} (Premium)
+                            </label>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 ) : null}

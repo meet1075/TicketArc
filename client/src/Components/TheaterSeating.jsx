@@ -15,6 +15,10 @@ const TheaterSeating = () => {
     cinema: '',
     location: '',
   });
+  const [showtimePrices, setShowtimePrices] = useState({
+    Regular: 0,
+    Premium: 0
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -43,6 +47,9 @@ const TheaterSeating = () => {
         const showtimeResponse = await api.get(`/showtime/getShowtime/${showtimeId}`);
         const showtimeData = showtimeResponse.data.data;
         const screenIdFromShowtime = showtimeData.screenId;
+
+        // Set showtime prices
+        setShowtimePrices(showtimeData.price || { Regular: 0, Premium: 0 });
 
         // Fetch screen details
         const screenResponse = await api.get(`/screen/getScreen/${screenIdFromShowtime}`);
@@ -74,7 +81,19 @@ const TheaterSeating = () => {
           }
           throw new Error('Invalid response structure: layout data missing or not an array');
         }
-        setSeatLayout(layoutData);
+        
+        // Process the layout data to ensure premium rows are correctly identified
+        const processedLayout = layoutData.map(row => {
+          // Check if any seat in the row is premium
+          const hasPremiumSeats = row.seats.some(seat => seat.seatType === 'Premium');
+          
+          return {
+            ...row,
+            isPremiumRow: hasPremiumSeats
+          };
+        });
+        
+        setSeatLayout(processedLayout);
       } catch (err) {
         console.error('Error fetching seat layout or movie details:', err);
         if (err.response) {
@@ -136,7 +155,8 @@ const TheaterSeating = () => {
   const getTotalAmount = () => {
     return selectedSeats.reduce((total, seatNumber) => {
       const row = seatLayout.find(r => r.seats.some(s => s.seatNumber === seatNumber));
-      return total + (row ? row.price : 250);
+      const seat = row?.seats.find(s => s.seatNumber === seatNumber);
+      return total + (seat?.price || 0);
     }, 0);
   };
 
@@ -259,32 +279,32 @@ const TheaterSeating = () => {
                       <div className="w-8 text-center font-bold dark:text-white">{row.row}</div>
                       <div className="flex-1 grid gap-1 md:gap-2" style={{ gridTemplateColumns: `repeat(${maxSeats}, minmax(0, 1fr))` }}>
                         {row.seats.map((seat) => (
-                          <button
-                            key={seat.seatNumber}
-                            onClick={() =>
-                              selectedSeats.includes(seat.seatNumber)
-                                ? handleCancelSeat(seat.seatNumber, seat.seatAvailabilityId)
-                                : handleSeatClick(seat.seatNumber, seat.seatAvailabilityId)
-                            }
-                            disabled={
-                              selectedSeats.length >= 6 && !selectedSeats.includes(seat.seatNumber)
-                            }
-                            className={`
-                              aspect-square min-w-[24px] md:min-w-[32px] rounded-t-lg flex items-center justify-center text-sm font-medium
-                              transition-all duration-200 transform hover:scale-110 touch-manipulation
-                              ${!seat.isAvailable || (seat.isReserved && !selectedSeats.includes(seat.seatNumber)) ? 'bg-red-500 text-white' : ''}
-                              ${selectedSeats.includes(seat.seatNumber) ? 'bg-gray-500 text-white' : ''}
-                              ${seat.isAvailable && (!seat.isReserved || selectedSeats.includes(seat.seatNumber)) && !selectedSeats.includes(seat.seatNumber) ? 'bg-green-500 dark:bg-green-600 hover:bg-green-600 dark:hover:bg-green-700' : ''}
-                            `}
-                            aria-label={`Seat ${seat.seatNumber}`}
-                          >
-                            {selectedSeats.includes(seat.seatNumber) && <Check className="w-3 h-3 md:w-4 md:h-4" />}
-                            {seat.isAvailable && (!seat.isReserved || selectedSeats.includes(seat.seatNumber)) && !selectedSeats.includes(seat.seatNumber) && seat.seatNumber.slice(1)}
-                          </button>
+                          <div key={seat.seatNumber} className="flex flex-col items-center">
+                            <button
+                              onClick={() =>
+                                selectedSeats.includes(seat.seatNumber)
+                                  ? handleCancelSeat(seat.seatNumber, seat.seatAvailabilityId)
+                                  : handleSeatClick(seat.seatNumber, seat.seatAvailabilityId)
+                              }
+                              disabled={
+                                selectedSeats.length >= 6 && !selectedSeats.includes(seat.seatNumber)
+                              }
+                              className={`
+                                aspect-square min-w-[24px] md:min-w-[32px] rounded-t-lg flex items-center justify-center text-sm font-medium
+                                transition-all duration-200 transform hover:scale-110 touch-manipulation
+                                ${!seat.isAvailable || (seat.isReserved && !selectedSeats.includes(seat.seatNumber)) ? 'bg-red-500 text-white' : ''}
+                                ${selectedSeats.includes(seat.seatNumber) ? 'bg-gray-500 text-white' : ''}
+                                ${seat.isAvailable && (!seat.isReserved || selectedSeats.includes(seat.seatNumber)) && !selectedSeats.includes(seat.seatNumber) ? 'bg-green-500 dark:bg-green-600 hover:bg-green-600 dark:hover:bg-green-700' : ''}
+                              `}
+                              aria-label={`Seat ${seat.seatNumber}`}
+                            >
+                              {selectedSeats.includes(seat.seatNumber) && <Check className="w-3 h-3 md:w-4 md:h-4" />}
+                              {seat.isAvailable && (!seat.isReserved || selectedSeats.includes(seat.seatNumber)) && !selectedSeats.includes(seat.seatNumber) && seat.seatNumber.slice(1)}
+                            </button>
+                            <span className="text-xs text-gray-700 dark:text-gray-300 mt-1">₹{seat.price}</span>
+                            <span className="text-[10px] text-gray-500 dark:text-gray-400">{seat.seatType.charAt(0).toUpperCase() + seat.seatType.slice(1)}</span>
+                          </div>
                         ))}
-                      </div>
-                      <div className="w-16 text-right text-sm text-gray-600 dark:text-gray-400">
-                        ₹{row.price}
                       </div>
                     </div>
                   );
