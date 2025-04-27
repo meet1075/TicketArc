@@ -251,53 +251,37 @@ const TheaterSeating = () => {
             {/* Seats */}
             <div className="grid gap-6 min-w-[320px]">
               {(() => {
-                // Find the maximum number of seats in any row
-                const maxSeats = Math.max(...seatLayout.map(row => row.seats.length > 0 ? Math.max(...row.seats.map(seat => parseInt(seat.seatNumber.replace(/\D/g, '')))) : 0));
+                // Use the exact number of seats per row from the layout data
+                const maxSeats = seatLayout.length > 0 ? seatLayout[0].seats.length : 0;
                 return seatLayout.map((row) => {
-                  // Create a map for quick lookup
-                  const seatMap = {};
-                  row.seats.forEach(seat => {
-                    // Extract seat number as integer for mapping
-                    const seatNum = parseInt(seat.seatNumber.replace(/\D/g, ''));
-                    seatMap[seatNum] = seat;
-                  });
                   return (
                     <div key={row.row} className="flex items-center gap-2">
                       <div className="w-8 text-center font-bold dark:text-white">{row.row}</div>
                       <div className="flex-1 grid gap-1 md:gap-2" style={{ gridTemplateColumns: `repeat(${maxSeats}, minmax(0, 1fr))` }}>
-                        {Array.from({ length: maxSeats }, (_, i) => {
-                          const seatNum = i + 1;
-                          const seat = seatMap[seatNum];
-                          if (seat) {
-                            return (
-                              <button
-                                key={seat.seatNumber}
-                                onClick={() =>
-                                  selectedSeats.includes(seat.seatNumber)
-                                    ? handleCancelSeat(seat.seatNumber, seat.seatAvailabilityId)
-                                    : handleSeatClick(seat.seatNumber, seat.seatAvailabilityId)
-                                }
-                                disabled={
-                                  selectedSeats.length >= 6 && !selectedSeats.includes(seat.seatNumber)
-                                }
-                                className={`
-                                  aspect-square min-w-[24px] md:min-w-[32px] rounded-t-lg flex items-center justify-center text-sm font-medium
-                                  transition-all duration-200 transform hover:scale-110 touch-manipulation
-                                  ${!seat.isAvailable || (seat.isReserved && !selectedSeats.includes(seat.seatNumber)) ? 'bg-red-500 text-white' : ''}
-                                  ${selectedSeats.includes(seat.seatNumber) ? 'bg-gray-500 text-white' : ''}
-                                  ${seat.isAvailable && (!seat.isReserved || selectedSeats.includes(seat.seatNumber)) && !selectedSeats.includes(seat.seatNumber) ? 'bg-green-500 dark:bg-green-600 hover:bg-green-600 dark:hover:bg-green-700' : ''}
-                                `}
-                                aria-label={`Seat ${seat.seatNumber}`}
-                              >
-                                {selectedSeats.includes(seat.seatNumber) && <Check className="w-3 h-3 md:w-4 md:h-4" />}
-                                {seat.isAvailable && (!seat.isReserved || selectedSeats.includes(seat.seatNumber)) && !selectedSeats.includes(seat.seatNumber) && seat.seatNumber.slice(1)}
-                              </button>
-                            );
-                          } else {
-                            // Render a placeholder for missing seat
-                            return <div key={`empty-${row.row}-${seatNum}`} className="aspect-square min-w-[24px] md:min-w-[32px]" />;
-                          }
-                        })}
+                        {row.seats.map((seat) => (
+                          <button
+                            key={seat.seatNumber}
+                            onClick={() =>
+                              selectedSeats.includes(seat.seatNumber)
+                                ? handleCancelSeat(seat.seatNumber, seat.seatAvailabilityId)
+                                : handleSeatClick(seat.seatNumber, seat.seatAvailabilityId)
+                            }
+                            disabled={
+                              selectedSeats.length >= 6 && !selectedSeats.includes(seat.seatNumber)
+                            }
+                            className={`
+                              aspect-square min-w-[24px] md:min-w-[32px] rounded-t-lg flex items-center justify-center text-sm font-medium
+                              transition-all duration-200 transform hover:scale-110 touch-manipulation
+                              ${!seat.isAvailable || (seat.isReserved && !selectedSeats.includes(seat.seatNumber)) ? 'bg-red-500 text-white' : ''}
+                              ${selectedSeats.includes(seat.seatNumber) ? 'bg-gray-500 text-white' : ''}
+                              ${seat.isAvailable && (!seat.isReserved || selectedSeats.includes(seat.seatNumber)) && !selectedSeats.includes(seat.seatNumber) ? 'bg-green-500 dark:bg-green-600 hover:bg-green-600 dark:hover:bg-green-700' : ''}
+                            `}
+                            aria-label={`Seat ${seat.seatNumber}`}
+                          >
+                            {selectedSeats.includes(seat.seatNumber) && <Check className="w-3 h-3 md:w-4 md:h-4" />}
+                            {seat.isAvailable && (!seat.isReserved || selectedSeats.includes(seat.seatNumber)) && !selectedSeats.includes(seat.seatNumber) && seat.seatNumber.slice(1)}
+                          </button>
+                        ))}
                       </div>
                       <div className="w-16 text-right text-sm text-gray-600 dark:text-gray-400">
                         ₹{row.price}

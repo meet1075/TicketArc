@@ -25,6 +25,7 @@ function AdminModal({ showModal, setShowModal, modalType, editingItem, setEditin
     numberOfColumns: '',
   });
   const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   // Predefined options for genres and languages
   const genreOptions = [
@@ -149,62 +150,89 @@ function AdminModal({ showModal, setShowModal, modalType, editingItem, setEditin
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
     setError(null);
-    const token = localStorage.getItem('accessToken');
-    let url = '';
-    let data = {};
-
-    if (modalType === 'movie') {
-      url = editingItem
-        ? `http://localhost:3000/api/v1/movie/update/${editingItem._id}`
-        : 'http://localhost:3000/api/v1/movie/addMovie';
-      data = new FormData();
-      data.append('title', formData.title);
-      if (formData.movieImage) data.append('movieImage', formData.movieImage);
-      data.append('genre', formData.genre);
-      data.append('duration', formData.duration);
-      data.append('description', formData.description);
-      data.append('language', formData.language);
-      data.append('releaseDate', formData.releaseDate);
-      data.append('rating', parseFloat(formData.rating));
-    } else if (modalType === 'theater') {
-      url = editingItem
-        ? `http://localhost:3000/api/v1/theater/updateTheater/${editingItem._id}`
-        : 'http://localhost:3000/api/v1/theater/addTheater';
-      data = {
-        name: formData.name,
-        location: formData.location,
-        facilities: formData.facilities ? formData.facilities.split(',').map((f) => f.trim()) : [],
-      };
-    } else if (modalType === 'screen') {
-      url = editingItem?._id
-        ? `http://localhost:3000/api/v1/screen/update/${editingItem._id}`
-        : `http://localhost:3000/api/v1/theater/theaters/addScreen/${formData.theaterId}`;
-      data = {
-        screenNumber: formData.screenNumber,
-        screenType: formData.screenType,
-        numberOfRows: formData.numberOfRows,
-        numberOfColumns: formData.numberOfColumns,
-        totalSeats: formData.numberOfRows * formData.numberOfColumns,
-      };
-    }
 
     try {
-      await axios({
-        method: editingItem?._id ? 'patch' : 'post',
-        url,
-        data,
-        headers: {
-          Authorization: `Bearer ${token}`,
-          ...(modalType === 'movie' ? { 'Content-Type': 'multipart/form-data' } : { 'Content-Type': 'application/json' }),
-        },
-        withCredentials: true,
-      });
+      let response;
+      const formDataToSend = new FormData();
+
+      if (modalType === 'movie') {
+        let url = editingItem
+          ? `http://localhost:3000/api/v1/movie/update/${editingItem._id}`
+          : 'http://localhost:3000/api/v1/movie/addMovie';
+        formDataToSend.append('title', formData.title);
+        if (formData.movieImage) formDataToSend.append('movieImage', formData.movieImage);
+        formDataToSend.append('genre', formData.genre);
+        formDataToSend.append('duration', formData.duration);
+        formDataToSend.append('description', formData.description);
+        formDataToSend.append('language', formData.language);
+        formDataToSend.append('releaseDate', formData.releaseDate);
+        formDataToSend.append('rating', parseFloat(formData.rating));
+
+        response = await axios({
+          method: editingItem?._id ? 'patch' : 'post',
+          url,
+          data: formDataToSend,
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
+            'Content-Type': 'multipart/form-data',
+          },
+          withCredentials: true,
+        });
+      } else if (modalType === 'theater') {
+        let url = editingItem
+          ? `http://localhost:3000/api/v1/theater/updateTheater/${editingItem._id}`
+          : 'http://localhost:3000/api/v1/theater/addTheater';
+        formDataToSend.append('name', formData.name);
+        formDataToSend.append('location[city]', formData.location.city);
+        formDataToSend.append('location[state]', formData.location.state);
+        formDataToSend.append('facilities', formData.facilities ? formData.facilities.split(',').map((f) => f.trim()) : []);
+
+        response = await axios({
+          method: editingItem?._id ? 'patch' : 'post',
+          url,
+          data: formDataToSend,
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
+            'Content-Type': 'application/json',
+          },
+          withCredentials: true,
+        });
+      } else if (modalType === 'screen') {
+        let url = editingItem?._id
+          ? `http://localhost:3000/api/v1/screen/update/${editingItem._id}`
+          : `http://localhost:3000/api/v1/theater/theaters/addScreen/${formData.theaterId}`;
+
+        // Prepare JSON payload
+        const screenPayload = {
+          screenNumber: parseInt(formData.screenNumber, 10),
+          screenType: formData.screenType,
+          numberOfRows: parseInt(formData.numberOfRows, 10),
+          numberOfColumns: parseInt(formData.numberOfColumns, 10),
+          totalSeats: parseInt(formData.numberOfRows, 10) * parseInt(formData.numberOfColumns, 10),
+          theaterId: formData.theaterId,
+        };
+
+        response = await axios({
+          method: editingItem?._id ? 'patch' : 'post',
+          url,
+          data: screenPayload,
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
+            'Content-Type': 'application/json',
+          },
+          withCredentials: true,
+        });
+      }
+
       setShowModal(false);
       if (refresh) refresh();
     } catch (err) {
       setError(`Failed to ${editingItem?._id ? 'update' : 'add'} ${modalType}: ${err.response?.data?.message || err.message}`);
       console.error('Error submitting form:', err.response || err);
+    } finally {
+      setLoading(false);
     }
   };
 

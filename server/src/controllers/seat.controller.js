@@ -317,14 +317,20 @@ import { SeatAvailability } from "../models/seatAvailability.model.js";
 
 const addSeatsForScreen = asyncHandler(async (req, res) => {
   const { screenId } = req.params;
-  let { totalRows, seatsPerRow, rowNames, seatTypes } = req.body;
+  let { rowNames, seatTypes } = req.body;
 
   if (!mongoose.isValidObjectId(screenId)) {
     throw new ApiErrors(400, "Invalid screenId");
   }
 
-  totalRows = totalRows || 10;
-  seatsPerRow = seatsPerRow || 10;
+  // Get the screen details to get the exact number of rows and columns
+  const screen = await Screen.findById(screenId);
+  if (!screen) {
+    throw new ApiErrors(404, "Screen not found");
+  }
+
+  const totalRows = screen.numberOfRows;
+  const seatsPerRow = screen.numberOfColumns;
 
   if (!rowNames || !Array.isArray(rowNames) || rowNames.length !== totalRows) {
     rowNames = Array.from({ length: totalRows }, (_, i) => String.fromCharCode(65 + i));
@@ -442,10 +448,10 @@ const getSeatLayoutForShowtime = asyncHandler(async (req, res) => {
       throw new ApiErrors(404, "Screen not found");
     }
 
-    // Calculate rows and seats per row based on total seats
-    // Assuming a standard layout where number of rows is roughly square root of total seats
-    const totalRows = Math.ceil(Math.sqrt(screen.totalSeats));
-    const seatsPerRow = Math.ceil(screen.totalSeats / totalRows);
+    // Get the number of rows and columns from the screen model
+    // These should be stored in the screen model when creating the screen
+    const totalRows = screen.numberOfRows || Math.ceil(Math.sqrt(screen.totalSeats));
+    const seatsPerRow = screen.numberOfColumns || Math.ceil(screen.totalSeats / totalRows);
     
     // Generate row names (A, B, C, etc.)
     const rowNames = Array.from({ length: totalRows }, (_, i) => String.fromCharCode(65 + i));

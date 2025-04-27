@@ -20,6 +20,14 @@ const screenSchema = new Schema({
         type: Number,
         required: true
     },
+    numberOfRows: {
+        type: Number,
+        required: true
+    },
+    numberOfColumns: {
+        type: Number,
+        required: true
+    },
     // seats: [{
     //     type: mongoose.Schema.Types.ObjectId,
     //     ref: "Seat"

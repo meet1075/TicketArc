@@ -194,7 +194,7 @@ const searchTheaters = asyncHandler(async (req, res) => {
 });
  const addScreenToTheater= asyncHandler(async(req,res)=>{
     const{theaterId}=req.params
-    const {screenNumber,screenType, totalSeats} = req.body
+    let {screenNumber,screenType, totalSeats, numberOfRows, numberOfColumns} = req.body
     if(!isValidObjectId(theaterId)){
         throw new ApiErrors(404,"Invalid Theater id")
     }
@@ -202,16 +202,23 @@ const searchTheaters = asyncHandler(async (req, res) => {
     if(!theater){
         throw new ApiErrors(404,"no theater found")
     }
-    if (!screenNumber || !screenType || !totalSeats) {
+    if (!screenNumber || !screenType || !totalSeats || !numberOfRows || !numberOfColumns) {
         throw new ApiErrors(400, "All fields are required");
     }
     if (req.user.role !== "admin" || theater.adminId.toString() !== req.user._id.toString()) {
         throw new ApiErrors(403, "You are not authorized to add screen to  this theater");
     }
+    // Ensure all numeric fields are numbers
+    screenNumber = Number(screenNumber);
+    totalSeats = Number(totalSeats);
+    numberOfRows = Number(numberOfRows);
+    numberOfColumns = Number(numberOfColumns);
     const screen=await Screen.create({
         screenNumber,
         screenType,
         totalSeats,
+        numberOfRows,
+        numberOfColumns,
         theaterId
     })
     theater.screens.push(screen._id);
