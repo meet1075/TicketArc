@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { Star, Clock, Calendar, ArrowLeft, MapPin } from 'lucide-react';
 import { AuthContext } from '../context/AuthContext'; // Adjust path
@@ -7,6 +7,7 @@ import { AuthContext } from '../context/AuthContext'; // Adjust path
 function MovieDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { isLoggedIn } = useContext(AuthContext);
   const [movie, setMovie] = useState(null);
   const [theaters, setTheaters] = useState([]);
@@ -95,7 +96,7 @@ function MovieDetails() {
   };
 
   const handleLogin = () => {
-    navigate('/login');
+    navigate('/login', { state: { from: location.pathname + location.search } });
   };
 
   const handleBack = () => {

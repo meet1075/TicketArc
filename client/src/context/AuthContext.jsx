@@ -1,6 +1,6 @@
 import React, { createContext, useState, useEffect } from 'react';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 export const AuthContext = createContext();
 
@@ -8,6 +8,7 @@ export const AuthProvider = ({ children }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [user, setUser] = useState(null);
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -43,16 +44,14 @@ export const AuthProvider = ({ children }) => {
     try {
       const response = await axios.post("http://localhost:3000/api/v1/user/login", credentials, {
         withCredentials: true,
-        
       });
-      console.log('Login response headers:', response.headers);
-
       if (response.status === 200) {
         const token = response.data.data.accessToken;
         localStorage.setItem("accessToken", token);
         setIsLoggedIn(true);
         setUser(response.data.data.user);
-        navigate(response.data.data.user.role === "admin" ? "/admin" : "/");
+        const redirectTo = location.state?.from || "/";
+        navigate(redirectTo, { replace: true });
         return true;
       }
     } catch (err) {
@@ -71,6 +70,8 @@ export const AuthProvider = ({ children }) => {
       console.error("Logout failed:", err);
     }
   };
+
+  const handleLogin = () => navigate('/login', { state: { from: location.pathname } });
 
   return (
     <AuthContext.Provider value={{ isLoggedIn, user, setUser, login, logout }}>

@@ -35,7 +35,9 @@ const Navbar = () => {
     navigate('/');
   };
 
-  const handleLogin = () => navigate('/login');
+  const handleLogin = () => {
+    navigate('/login', { state: { from: location.pathname + location.search } });
+  };
 
   const dropdownVariants = {
     hidden: { opacity: 0, y: -10, transition: { duration: 0.2 } },
@@ -110,7 +112,10 @@ const Navbar = () => {
               </div>
             ) : (
               <button 
-                onClick={handleLogin}
+                onClick={() => {
+                  navigate('/login', { state: { from: location.pathname + location.search } });
+                  setMenuOpen(false);
+                }}
                 className="flex items-center space-x-1 bg-red-500 hover:bg-red-600 px-4 py-2 rounded-md transition-colors text-sm md:text-base"
               >
                 <LogIn size={16} />
@@ -172,7 +177,7 @@ const Navbar = () => {
                 ) : (
                   <button 
                     onClick={() => {
-                      handleLogin();
+                      navigate('/login', { state: { from: location.pathname + location.search } });
                       setMenuOpen(false);
                     }}
                     className="flex items-center space-x-1 hover:bg-red-500 py-2 rounded-md transition-colors w-full text-sm"
