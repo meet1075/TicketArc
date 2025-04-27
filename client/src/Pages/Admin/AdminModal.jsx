@@ -245,8 +245,6 @@ function AdminModal({ showModal, setShowModal, modalType, editingItem, setEditin
             numberOfRows: parseInt(formData.numberOfRows),
             totalSeats: parseInt(formData.numberOfRows) * parseInt(formData.numberOfColumns),
             premiumRows: formData.premiumRows.map(row => parseInt(row)),
-            regularPrice: parseInt(formData.regularPrice) || 100,
-            premiumPrice: parseInt(formData.premiumPrice) || 200
           };
 
           console.log('Adding seats with data:', JSON.stringify(seatData, null, 2));

@@ -346,7 +346,6 @@ const addSeatsForScreen = asyncHandler(async (req, res) => {
         seatNumber,
         seatType: seatTypes[row].toLowerCase(),
         screenId,
-        price: isPremium ? premiumPrice : regularPrice,
         status: 'available'
       });
     }
@@ -485,7 +484,7 @@ const getSeatLayoutForShowtime = asyncHandler(async (req, res) => {
         const seatNumber = `${rowNames[row]}${col}`;
         const existingSeat = existingSeatsMap.get(seatNumber);
         const availability = availabilityMap.get(seatNumber);
-        const seatType = existingSeat?.seatType || "Regular";
+        const seatType = existingSeat?.seatType || "regular";
         rowSeats.push({
           seatNumber,
           seatType,
@@ -493,7 +492,7 @@ const getSeatLayoutForShowtime = asyncHandler(async (req, res) => {
           isReserved: availability?.isReserved ?? false,
           reservationExpiry: availability?.reservationExpiry || null,
           seatAvailabilityId: availability?._id || null,
-          price: seatType === "Premium" ? showtimePrices.Premium : showtimePrices.Regular
+          price: seatType.toLowerCase() === "premium" ? showtimePrices.Premium : showtimePrices.Regular
         });
       }
       seatLayout.push({

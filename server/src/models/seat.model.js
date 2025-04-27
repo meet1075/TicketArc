@@ -15,10 +15,6 @@ const seatSchema = new Schema({
         ref: "Screen",
         required: true
     },
-    price: {
-        type: Number,
-        required: true
-    },
     status: {
         type: String,
         enum: ["available", "booked", "reserved"],
