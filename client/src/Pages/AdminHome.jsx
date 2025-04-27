@@ -4,10 +4,9 @@ import { LogOut } from 'lucide-react';
 import { AuthContext } from '../context/AuthContext'; // Adjust path
 import MoviesTab from './Admin/MoviesTab';
 import TheatersTab from './Admin/TheatersTab';
-import AnalyticsTab from './Admin/AnalyticsTab';
 import SettingsTab from './Admin/SettingsTab';
 import AdminModal from './Admin/AdminModal';
-import { Building2, Film, BarChart4, Settings2 } from 'lucide-react';
+import { Building2, Film, Settings2 } from 'lucide-react';
 
 function AdminHome() {
   const { logout, user } = useContext(AuthContext);
@@ -62,7 +61,6 @@ function AdminHome() {
           {[
             { id: 'movies', Icon: Film, label: 'Movies' },
             { id: 'theaters', Icon: Building2, label: 'Theaters' },
-            { id: 'analytics', Icon: BarChart4, label: 'Analytics' },
             { id: 'settings', Icon: Settings2, label: 'Settings' },
           ].map(({ id, Icon, label }) => (
             <button
@@ -94,7 +92,6 @@ function AdminHome() {
             setEditingItem={setEditingItem}
           />
         )}
-        {activeTab === 'analytics' && <AnalyticsTab />}
         {activeTab === 'settings' && <SettingsTab />}
         
         {/* Updated AdminModal with refresh prop */}

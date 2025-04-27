@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
+import { ArrowLeft } from 'lucide-react';
 import logo from "../assets/image/logo.png";
 import axios from 'axios';
 
@@ -50,6 +51,12 @@ function Login() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <button
+        onClick={() => navigate(-1)}
+        className="fixed top-20 left-4 z-10 bg-white/80 backdrop-blur-sm p-2 rounded-full shadow-lg hover:bg-white transition-colors"
+      >
+        <ArrowLeft size={24} />
+      </button>
       <div className="max-w-md w-full space-y-8">
         <div>
           <div className="flex justify-center pt-7">
@@ -98,25 +105,6 @@ function Login() {
                 value={formData.password}
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
               />
-            </div>
-          </div>
-
-          <div className="flex items-center justify-between">
-            <div className="flex items-center">
-              <input
-                id="remember-me"
-                name="remember-me"
-                type="checkbox"
-                className="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded"
-              />
-              <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900">
-                Remember me
-              </label>
-            </div>
-            <div className="text-sm">
-              <a href="#" className="font-medium text-red-600 hover:text-red-500">
-                Forgot your password?
-              </a>
             </div>
           </div>
 

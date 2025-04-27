@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Film, Calendar, Clock, MapPin, Ticket, AlertCircle, LogIn } from 'lucide-react';
+import { Film, Calendar, Clock, MapPin, Ticket, AlertCircle, LogIn, ArrowLeft } from 'lucide-react';
 import { AuthContext } from '../context/AuthContext'; // Adjust path
 import axios from 'axios';
 
@@ -53,6 +53,12 @@ function Bookings() {
 
   return (
     <div className="pt-16 min-h-screen bg-gray-50">
+      <button
+        onClick={() => navigate(-1)}
+        className="fixed top-20 left-4 z-10 bg-white/80 backdrop-blur-sm p-2 rounded-full shadow-lg hover:bg-white transition-colors"
+      >
+        <ArrowLeft size={24} />
+      </button>
       <div className="bg-gradient-to-r from-red-600 to-red-800 text-white py-12">
         <div className="container mx-auto px-4">
           <h1 className="text-3xl font-bold mb-2">My Bookings</h1>
@@ -153,7 +159,7 @@ function Bookings() {
             </div>
             <h2 className="text-2xl font-bold mb-4">No Bookings Found</h2>
             <p className="text-gray-600 mb-6">
-              You haven’t made any bookings yet. Browse our movies and book your first ticket!
+              You haven't made any bookings yet. Browse our movies and book your first ticket!
             </p>
             <button
               onClick={() => navigate('/')}
