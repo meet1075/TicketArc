@@ -282,7 +282,7 @@ const TheaterSeating = () => {
                           <div key={seat.seatNumber} className="flex flex-col items-center">
                             <button
                               onClick={() =>
-                                selectedSeats.includes(seat.seatNumber)
+                                selectedSeats.includes(seat.seatNumber) && seat.isReserved
                                   ? handleCancelSeat(seat.seatNumber, seat.seatAvailabilityId)
                                   : handleSeatClick(seat.seatNumber, seat.seatAvailabilityId)
                               }
