@@ -1,5 +1,6 @@
 import React from 'react';
-import { Linkedin, Github, Mail } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Linkedin, Github, Mail, ArrowLeft } from 'lucide-react';
 import { useEffect } from 'react';
 
 import MeetImg from '../assets/image/team/Meet.jpg';
@@ -8,6 +9,8 @@ import ShubhamImg from '../assets/image/team/Shubham.jpg';
 import ShreyanImg from '../assets/image/team/Shreyan.jpg';
 
 function AboutUs() {
+  const navigate = useNavigate();
+
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
@@ -54,11 +57,17 @@ const developers = [
 
   return (
     <div className="pt-16">
+      <button
+        onClick={() => navigate(-1)}
+        className="fixed top-20 left-4 z-10 bg-white/80 backdrop-blur-sm p-2 rounded-full shadow-lg hover:bg-white transition-colors"
+      >
+        <ArrowLeft size={24} />
+      </button>
       <div className="bg-gradient-to-r from-red-600 to-red-800 text-white py-20">
         <div className="container mx-auto px-4">
           <h1 className="text-4xl font-bold text-center mb-4">Meet Our Team</h1>
           <p className="text-gray-100 text-center max-w-2xl mx-auto">
-          We are second-year Computer Engineering students at DEPSTAR, CHARUSAT, driven by a passion for technology and problem-solving. Our team thrives on innovation, collaboration, and a commitment to developing solutions that create a meaningful impact. Through continuous learning and hands-on experience, we aim to bridge the gap between ideas and real-world applications, shaping a future powered by technology.
+            We are second-year Computer Engineering students at DEPSTAR, CHARUSAT, driven by a passion for technology and problem-solving. Our team thrives on innovation, collaboration, and a commitment to developing solutions that create a meaningful impact. Through continuous learning and hands-on experience, we aim to bridge the gap between ideas and real-world applications, shaping a future powered by technology.
           </p>
         </div>
       </div>

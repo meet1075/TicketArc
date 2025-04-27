@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { Mail, Phone, Facebook, Twitter, Instagram, Send } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Mail, Phone, Facebook, Twitter, Instagram, Send, ArrowLeft } from 'lucide-react';
 
 function Contact() {
+  const navigate = useNavigate();
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -32,6 +34,12 @@ function Contact() {
 
   return (
     <div className="pt-16">
+      <button
+        onClick={() => navigate(-1)}
+        className="fixed top-20 left-4 z-10 bg-white/80 backdrop-blur-sm p-2 rounded-full shadow-lg hover:bg-white transition-colors"
+      >
+        <ArrowLeft size={24} />
+      </button>
       <div className="bg-gray-900 text-white py-20">
         <div className="container mx-auto px-4">
           <h1 className="text-4xl font-bold text-center mb-4">Get in Touch</h1>

@@ -1,12 +1,22 @@
 import React, { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { ArrowLeft } from 'lucide-react';
 
 function TermsConditions() {
+  const navigate = useNavigate();
+
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
 
   return (
     <div className="pt-16 min-h-screen bg-gray-50">
+      <button
+        onClick={() => navigate(-1)}
+        className="fixed top-20 left-4 z-10 bg-white/80 backdrop-blur-sm p-2 rounded-full shadow-lg hover:bg-white transition-colors"
+      >
+        <ArrowLeft size={24} />
+      </button>
       <div className="bg-gradient-to-r from-red-600 to-red-800 text-white py-12">
         <div className="container mx-auto px-4">
           <h1 className="text-3xl font-bold mb-2">Terms & Conditions</h1>

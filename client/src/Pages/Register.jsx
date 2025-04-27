@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Film } from 'lucide-react';
+import { Film, ArrowLeft } from 'lucide-react';
 import axios from "axios";
 import logo from "../assets/image/logo.png"
 
@@ -40,6 +40,12 @@ function Register() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <button
+        onClick={() => navigate(-1)}
+        className="fixed top-20 left-4 z-10 bg-white/80 backdrop-blur-sm p-2 rounded-full shadow-lg hover:bg-white transition-colors"
+      >
+        <ArrowLeft size={24} />
+      </button>
       <div className="max-w-md w-full space-y-8">
         <div>
           <div className="flex justify-center">

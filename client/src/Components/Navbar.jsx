@@ -1,17 +1,16 @@
 import React, { useState, useRef, useEffect, useContext } from 'react';
-import { User, Ticket, LogIn, Menu, X, LogOut, ChevronDown, Bell, Settings } from 'lucide-react';
+import { User, Ticket, LogIn, Menu, X, LogOut, ChevronDown } from 'lucide-react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { AuthContext } from '../context/AuthContext'; // Import AuthContext
+import { AuthContext } from '../context/AuthContext';
 import logo from "../assets/image/logo.png";
 
 const Navbar = () => {
-  const { isLoggedIn, user, logout } = useContext(AuthContext); // Use AuthContext
+  const { isLoggedIn, user, logout } = useContext(AuthContext);
   const navigate = useNavigate();
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [notifications, setNotifications] = useState(3);
   const dropdownRef = useRef(null);
 
   useEffect(() => {
@@ -59,15 +58,6 @@ const Navbar = () => {
             {isLoggedIn ? (
               <div className="relative" ref={dropdownRef}>
                 <div className="flex items-center space-x-4">
-                  <button className="relative hover:text-red-500 transition-colors">
-                    <Bell size={20} />
-                    {notifications > 0 && (
-                      <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
-                        {notifications}
-                      </span>
-                    )}
-                  </button>
-
                   <button 
                     onClick={() => setDropdownOpen(!dropdownOpen)}
                     className="flex items-center space-x-2 hover:text-red-500 transition-colors"
@@ -86,10 +76,6 @@ const Navbar = () => {
                       variants={dropdownVariants}
                       className="absolute right-0 mt-2 w-64 bg-white rounded-md shadow-lg py-1 text-gray-800"
                     >
-                      {/* <div className="px-4 py-2 border-b border-gray-100">
-                        <p className="text-sm text-gray-500">Loyalty Points</p>
-                        <p className="font-bold text-red-500">{user?.points || 0} points</p>
-                      </div> */}
                       <Link to="/profile" className="flex items-center px-4 py-2 hover:bg-gray-100 transition-colors">
                         <User size={16} className="mr-2" />
                         <span>Profile</span>
@@ -98,10 +84,6 @@ const Navbar = () => {
                         <Ticket size={16} className="mr-2" />
                         <span>Bookings</span>
                       </Link>
-                      {/* <Link to="/settings" className="flex items-center px-4 py-2 hover:bg-gray-100 transition-colors">
-                        <Settings size={16} className="mr-2" />
-                        <span>Settings</span>
-                      </Link> */}
                       <button onClick={handleLogout} className="flex items-center w-full px-4 py-2 hover:bg-gray-100 transition-colors">
                         <LogOut size={16} className="mr-2" />
                         <span>Logout</span>
@@ -148,28 +130,17 @@ const Navbar = () => {
                   <>
                     <div className="flex items-center justify-between py-2 border-t border-gray-700">
                       <div className="flex items-center space-x-2">
-                        <img 
-                          src={user?.photo || "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"} 
-                          alt={user?.name || "User"}
-                          className="w-8 h-8 rounded-full"
-                        />
                         <span className="text-sm">{user?.fullName || "User"}</span>
                       </div>
-                      {notifications > 0 && (
-                        <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full">
-                          {notifications} new
-                        </span>
-                      )}
                     </div>
                     <Link to="/profile" className="block hover:text-red-500 transition-colors text-sm">Profile</Link>
                     <Link to="/bookings" className="block hover:text-red-500 transition-colors text-sm">Bookings</Link>
-                    <Link to="/settings" className="block hover:text-red-500 transition-colors text-sm">Settings</Link>
                     <button 
                       onClick={() => {
                         handleLogout();
                         setMenuOpen(false);
                       }}
-                      className="block w-full text-left text-red-500 hover:text-red-600 transition-colors text-sm"
+                      className="block w-full text-left hover:text-red-600 transition-colors text-sm"
                     >
                       Logout
                     </button>
