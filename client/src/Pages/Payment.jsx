@@ -22,6 +22,8 @@ const Payment = () => {
   const [showtimeDetails, setShowtimeDetails] = useState(null);
   const [fetchError, setFetchError] = useState(null);
   const [error, setError] = useState(null);
+  const [timeLeft, setTimeLeft] = useState(300); // 5 minutes in seconds
+  const [sessionExpired, setSessionExpired] = useState(false);
 
   const { state } = location;
 
@@ -40,6 +42,19 @@ const Payment = () => {
       fetchShowtimeDetails();
     }
   }, [bookingDetails.showtimeId]);
+
+  useEffect(() => {
+    if (status === 'completed' || status === 'failed') return; // Don't run timer if payment is done/failed
+    if (timeLeft <= 0) {
+      setSessionExpired(true);
+      // Optionally, call API to release reserved seats here
+      return;
+    }
+    const timer = setInterval(() => {
+      setTimeLeft((prev) => prev - 1);
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [timeLeft, status]);
 
   const fetchShowtimeDetails = async () => {
     try {
@@ -216,6 +231,22 @@ const Payment = () => {
         </div>
       </div>
 
+      {/* Timer */}
+      <div className="sticky top-0 z-20 flex justify-center w-full bg-transparent py-4">
+        <div className="rounded-2xl shadow-lg px-6 py-2 bg-white dark:bg-gray-900 border border-red-200 dark:border-red-700 max-w-fit">
+          {!sessionExpired && (
+            <div className="text-lg font-semibold text-red-600">
+              Time left: {Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}
+            </div>
+          )}
+          {sessionExpired && (
+            <div className="text-lg font-bold text-red-700">
+              Booking session expired. Please try again.
+            </div>
+          )}
+        </div>
+      </div>
+
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-3xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -345,7 +376,7 @@ const Payment = () => {
 
                 <button
                   type="submit"
-                  disabled={loading || !isFormValid()}
+                  disabled={loading || !isFormValid() || sessionExpired}
                   className="w-full bg-red-500 text-white py-3 rounded-lg hover:bg-red-600 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
                 >
                   {loading ? (
