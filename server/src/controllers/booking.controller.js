@@ -167,12 +167,10 @@ const cancelBooking = asyncHandler(async (req, res) => {
     .map((seat) => seat.seatId?._id)
     .filter(Boolean); // Remove null values
 
-  console.log("🪑 Seat IDs to be released:", seatIds);
-
   if (seatIds.length > 0) {
-    // ✅ Ensure seats are properly released
-    const updateResult = await SeatAvailability.updateMany(
-      { _id: { $in: seatIds } },
+    // ✅ Ensure seats are properly released for the correct showtime
+    await SeatAvailability.updateMany(
+      { seatId: { $in: seatIds }, showtimeId: booking.showtimeId },
       {
         $set: {
           isBooked: false,
@@ -183,31 +181,32 @@ const cancelBooking = asyncHandler(async (req, res) => {
         }
       }
     );
-
-    console.log("📌 Seat Update Result:", updateResult);
   }
 
-  // ✅ Update Booking Status
-  booking.bookingStatus = "Cancelled";
-
-  // ✅ Adjust `paymentStatus` to a valid enum value
-  if (booking.paymentStatus === "Success") {
-    booking.paymentStatus = "Pending"; // Change to a valid enum value
+  // ✅ Update related Payment status to 'Refunded'
+  if (booking.paymentId) {
+    const payment = await Payment.findById(booking.paymentId);
+    if (payment) {
+      payment.paymentStatus = "Refunded";
+      payment.refundStatus = "Refunded";
+      await payment.save();
+    }
   }
 
-  await booking.save();
+  // ✅ Delete the booking from the database
+  await Booking.deleteOne({ _id: bookingId });
 
   return res.status(200).json(new ApiResponse(
     200,
-    { booking },
-    "Booking cancelled successfully, and seats have been released."
+    {},
+    "Booking cancelled, deleted, payment refunded, and seats have been released."
   ));
 });
 const getAllBookingsOfShowTime = asyncHandler(async (req, res) => {
-  const { showTimeId } = req.params;
+  const { showtimeId } = req.params;
 
   // ✅ Fetch necessary details: User's userName & seat numbers
-  const bookings = await Booking.find({ showtimeId: showTimeId })
+  const bookings = await Booking.find({ showtimeId })
     .populate({
       path: "userId",
       select: "userName _id", // ✅ Fetch userName instead of fullName
@@ -219,8 +218,8 @@ const getAllBookingsOfShowTime = asyncHandler(async (req, res) => {
 
   // ✅ Transform response to show userName instead of ID
   const formattedBookings = bookings.map((booking) => ({
-    user: booking.userId?.userName || `User-${booking.userId?._id.slice(-4)}`, // 🎯 Show userName or anonymized ID
-    seats: booking.seats.map((seat) => seat.seatId?.seatNumber || "Unknown"), // 🎯 Handle missing seat numbers
+    user: booking.userId?.userName || `User-${booking.userId?._id.slice(-4)}`,
+    seats: booking.seats.map((seat) => seat.seatId?.seatNumber || "Unknown"),
   }));
 
   return res.status(200).json(
@@ -261,12 +260,12 @@ const getAllBookingsOfUser = asyncHandler(async (req, res) => {
 
 
 const seatAvailability = asyncHandler(async (req, res) => {
-  const { showTimeId } = req.params;
+  const { showtimeId } = req.params;
 
-  console.log("Checking seat availability for showTimeId:", showTimeId);
+  console.log("Checking seat availability for showtimeId:", showtimeId);
 
   // ✅ Fetch all seats for this showtime
-  const allSeats = await SeatAvailability.find({ showTimeId }).select("seatNumber isBooked");
+  const allSeats = await SeatAvailability.find({ showtimeId }).select("seatNumber isBooked");
 
   if (!allSeats.length) {
     console.log("No seats found for this showtime.");

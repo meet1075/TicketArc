@@ -124,7 +124,7 @@ function Contact() {
                 </div>
                 <div className="flex items-center space-x-3">
                   <Phone className="w-5 h-5 text-red-500" />
-                  <span>+91 1234567890</span>
+                  <span>+91 9925220225</span>
                 </div>
               </div>
             </div>

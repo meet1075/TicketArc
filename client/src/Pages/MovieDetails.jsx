@@ -187,14 +187,6 @@ function MovieDetails() {
                 {Array.isArray(movie.genre) ? movie.genre.join(", ") : movie.genre}
               </span>
               <span className="px-3 py-1 bg-gray-200 rounded-full text-sm">{movie.language}</span>
-              <div className="flex items-center text-yellow-500">
-                <Star className="w-5 h-5 fill-current" />
-                <span className="ml-1">{movie.rating || 'N/A'}</span>
-              </div>
-              <div className="flex items-center text-gray-600">
-                <Clock className="w-5 h-5" />
-                <span className="ml-1">{movie.duration} mins</span>
-              </div>
             </div>
 
             <p className="text-gray-600 mb-6">{movie.description}</p>

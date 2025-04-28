@@ -131,6 +131,14 @@ const TheaterSeating = () => {
     setShowMobileBooking(selectedSeats.length > 0);
   }, [selectedSeats]);
 
+  useEffect(() => {
+    // Check if we need to refetch after a cancellation
+    if (sessionStorage.getItem('refetchSeatsAfterCancel')) {
+      sessionStorage.removeItem('refetchSeatsAfterCancel');
+      window.location.reload(); // Force reload to refetch seat layout
+    }
+  }, []);
+
   const handleSeatClick = async (seatNumber, seatAvailabilityId) => {
     const seat = seatLayout
       .flatMap(row => row.seats)

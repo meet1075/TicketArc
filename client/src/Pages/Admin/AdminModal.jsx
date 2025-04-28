@@ -49,7 +49,6 @@ function AdminModal({ showModal, setShowModal, modalType, editingItem, setEditin
           description: editingItem.description || '',
           language: editingItem.language || '',
           releaseDate: editingItem.releaseDate ? editingItem.releaseDate.split('T')[0] : '',
-          rating: editingItem.rating || 1,
           name: '',
           location: { city: '', state: '' },
           screens: [],
@@ -74,7 +73,6 @@ function AdminModal({ showModal, setShowModal, modalType, editingItem, setEditin
           description: '',
           language: '',
           releaseDate: '',
-          rating: 1,
           name: editingItem.name || '',
           location: editingItem.location || { city: '', state: '' },
           screens: editingItem.screens || [],
@@ -99,7 +97,6 @@ function AdminModal({ showModal, setShowModal, modalType, editingItem, setEditin
           description: '',
           language: '',
           releaseDate: '',
-          rating: 1,
           name: '',
           location: { city: '', state: '' },
           screens: [],
@@ -125,7 +122,6 @@ function AdminModal({ showModal, setShowModal, modalType, editingItem, setEditin
         description: '',
         language: '',
         releaseDate: '',
-        rating: 1,
         name: '',
         location: { city: '', state: '' },
         screens: [],
@@ -303,7 +299,6 @@ function AdminModal({ showModal, setShowModal, modalType, editingItem, setEditin
       description: '',
       language: '',
       releaseDate: '',
-      rating: 1,
       name: '',
       location: { city: '', state: '' },
       screens: [],
@@ -425,20 +420,6 @@ function AdminModal({ showModal, setShowModal, modalType, editingItem, setEditin
                         onChange={handleInputChange}
                         required
                         className="w-full p-2 border rounded-md"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Rating (1-10)</label>
-                      <input
-                        type="number"
-                        name="rating"
-                        value={formData.rating}
-                        onChange={handleInputChange}
-                        required
-                        className="w-full p-2 border rounded-md"
-                        min="1"
-                        max="10"
-                        step="0.1"
                       />
                     </div>
                     <div className="sm:col-span-2">

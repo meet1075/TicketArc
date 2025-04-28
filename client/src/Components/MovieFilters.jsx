@@ -56,7 +56,6 @@ const MovieFilters = ({ onFilter, activeFilters }) => {
               onChange={handleSortChange}
             >
               <option value="">Default</option>
-              <option value="rating">Rating</option>
               <option value="name">Name</option>
             </select>
           </div>
@@ -120,7 +119,6 @@ const MovieFilters = ({ onFilter, activeFilters }) => {
                   onChange={handleSortChange}
                 >
                   <option value="">Default</option>
-                  <option value="rating">Rating</option>
                   <option value="name">Name</option>
                 </select>
               </div>
