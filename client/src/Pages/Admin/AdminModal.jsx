@@ -218,10 +218,13 @@ function AdminModal({ showModal, setShowModal, modalType, editingItem, setEditin
             withCredentials: true,
           });
 
-          console.log('Screen response:', screenResponse.data);
+          // Check if the response is successful
+          if (!screenResponse.data || !screenResponse.data.data) {
+            throw new Error('Invalid response from server');
+          }
 
           // Get the screen ID from the response
-          const screenId = editingItem?._id || screenResponse.data?.data?._id;
+          const screenId = editingItem?._id || screenResponse.data.data._id;
           
           if (!screenId) {
             throw new Error('Failed to get screen ID from response');
@@ -247,33 +250,27 @@ function AdminModal({ showModal, setShowModal, modalType, editingItem, setEditin
             premiumRows: formData.premiumRows.map(row => parseInt(row)),
           };
 
-          console.log('Adding seats with data:', JSON.stringify(seatData, null, 2));
+          // Add seats for the screen
+          const seatResponse = await axios.post(`http://localhost:3000/api/v1/seat/addSeats/${screenId}`, seatData, {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
+              'Content-Type': 'application/json',
+            },
+            withCredentials: true,
+          });
 
-          try {
-            // Add seats for the screen
-            const seatResponse = await axios.post(`http://localhost:3000/api/v1/seat/addSeats/${screenId}`, seatData, {
-              headers: {
-                Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
-                'Content-Type': 'application/json',
-              },
-              withCredentials: true,
-            });
-
-            console.log('Seat response:', seatResponse.data);
-
-            if (seatResponse.data.success && seatResponse.data.statusCode === 201) {
-              setShowModal(false);
-              if (refresh) refresh();
-            } else {
-              throw new Error(seatResponse.data.message || 'Failed to add seats');
-            }
-          } catch (error) {
-            console.error('Error adding seats:', error);
-            throw new Error(error.response?.data?.message || 'Failed to add seats');
+          // Check if the seat response is successful
+          if (!seatResponse.data || !seatResponse.data.data) {
+            throw new Error('Failed to add seats: Invalid response from server');
           }
+
+          setShowModal(false);
+          if (refresh) refresh();
+          return; // Exit early after successful screen and seat creation
         } catch (error) {
           console.error('Error creating screen or adding seats:', error);
-          setError(error.response?.data?.message || 'Failed to create screen or add seats');
+          const errorMessage = error.response?.data?.message || error.message || 'Failed to create screen or add seats';
+          setError(errorMessage);
           setLoading(false);
           return;
         }

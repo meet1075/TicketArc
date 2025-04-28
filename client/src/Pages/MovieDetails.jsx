@@ -11,12 +11,22 @@ function MovieDetails() {
   const { isLoggedIn } = useContext(AuthContext);
   const [movie, setMovie] = useState(null);
   const [theaters, setTheaters] = useState([]);
-  const [selectedTheater, setSelectedTheater] = useState(null);
+  const [selectedTheaterId, setSelectedTheaterId] = useState(null);
+  const [selectedDate, setSelectedDate] = useState('');
   const [selectedTime, setSelectedTime] = useState(null);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Debug log: runs on every render
+  useEffect(() => {
+    const selectedTheater = theaters.find(t => t.id === selectedTheaterId);
+    console.log('Theaters:', theaters);
+    console.log('SelectedTheaterId:', selectedTheaterId);
+    console.log('SelectedTheater:', selectedTheater);
+  }, [theaters, selectedTheaterId]);
+
+  // Data fetch: runs only on mount or when id changes
   useEffect(() => {
     window.scrollTo(0, 0);
     fetchMovieDetails();
@@ -56,21 +66,16 @@ function MovieDetails() {
       });
       const showtimes = Array.isArray(showtimeResponse.data.data) ? showtimeResponse.data.data : [];
 
-      // Map theaters with their showtimes
+      // Map theaters with their showtimes (keep full showtime object)
       const theatersWithShowtimes = theaterData.map((theater) => {
-        const theaterShowtimes = showtimes.filter((st) => 
+        const theaterShowtimes = showtimes.filter((st) =>
           st.screenId && st.screenId.theaterId && st.screenId.theaterId.toString() === theater._id.toString()
         );
         return {
           id: theater._id,
           name: theater.name,
           location: `${theater.location.city}, ${theater.location.state}`,
-          showtimes: theaterShowtimes.map((st) => ({
-            time: new Date(st.showDateTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-            showtimeId: st._id,
-            price: st.price?.Regular || 10, // Default price if not set
-            screenId: st.screenId?._id || st.screenId, // Ensure screenId is included
-          })),
+          showtimes: theaterShowtimes, // keep full showtime object
         };
       }).filter((t) => t.showtimes.length > 0);
 
@@ -82,17 +87,23 @@ function MovieDetails() {
   };
 
   const handleTheaterSelect = (theater) => {
-    setSelectedTheater(theater);
+    setSelectedTheaterId(theater.id);
     setSelectedTime(null);
   };
 
-  const handleTimeSelect = (time, showtimeId, screenId) => {
+  const handleDateSelect = (date) => {
+    console.log('handleDateSelect called with date:', date);
+    setSelectedDate(date);
+    setSelectedTime(null);
+  };
+
+  const handleTimeSelect = (showtimeObj) => {
     if (!isLoggedIn) {
       setShowLoginPrompt(true);
       return;
     }
-    setSelectedTime(time);
-    navigate(`/theater-seating/${id}/${screenId}/${showtimeId}`);
+    setSelectedTime(showtimeObj._id);
+    navigate(`/theater-seating/${id}/${showtimeObj.screenId._id || showtimeObj.screenId}/${showtimeObj._id}`);
   };
 
   const handleLogin = () => {
@@ -102,6 +113,39 @@ function MovieDetails() {
   const handleBack = () => {
     navigate(-1);
   };
+
+  // Helper: get unique dates for selected theater's showtimes
+  const getAvailableDates = () => {
+    if (!selectedTheater) return [];
+    const dates = selectedTheater.showtimes.map(st =>
+      new Date(st.showDateTime).toLocaleDateString('en-CA')
+    );
+    const uniqueDates = [...new Set(dates)];
+    console.log('Available Dates:', uniqueDates);
+    return uniqueDates;
+  };
+
+  // Helper: format date as DD/MM/YYYY
+  const formatDate = (isoDate) => {
+    const [year, month, day] = isoDate.split('-');
+    return `${day}/${month}/${year}`;
+  };
+
+  // Helper: get showtimes for selected date
+  const getShowtimesForSelectedDate = () => {
+    if (!selectedTheater || !selectedDate) return [];
+    const filtered = selectedTheater.showtimes.filter(st =>
+      new Date(st.showDateTime).toLocaleDateString('en-CA') === selectedDate
+    );
+    console.log('Selected Date:', selectedDate);
+    console.log('Filtered Showtimes:', filtered);
+    return filtered;
+  };
+
+  // Always get the selectedTheater from the current theaters array
+  const selectedTheater = theaters.find(t => t.id === selectedTheaterId);
+
+  console.log('Rendering MovieDetails', { selectedDate, selectedTheater });
 
   if (loading) return <div className="text-center py-20">Loading...</div>;
   if (error) return <div className="text-center py-20 text-red-500">{error}</div>;
@@ -173,7 +217,7 @@ function MovieDetails() {
                     <div
                       key={theater.id}
                       className={`p-4 border rounded-lg cursor-pointer transition-colors ${
-                        selectedTheater?.id === theater.id ? 'border-red-500 bg-red-50' : 'hover:border-red-500'
+                        selectedTheaterId === theater.id ? 'border-red-500 bg-red-50' : 'hover:border-red-500'
                       }`}
                       onClick={() => handleTheaterSelect(theater)}
                     >
@@ -186,24 +230,51 @@ function MovieDetails() {
                           </div>
                         </div>
                       </div>
-                      {selectedTheater?.id === theater.id && (
+                      {selectedTheaterId === theater.id && (
                         <div className="mt-4">
-                          <p className="text-sm font-medium mb-2">Select Showtime</p>
-                          <div className="flex flex-wrap gap-2">
-                            {theater.showtimes.map((st) => (
+                          <p className="text-sm font-medium mb-2">Select Date</p>
+                          <div className="flex flex-wrap gap-2 mb-4">
+                            {getAvailableDates().map(date => (
                               <button
-                                key={st.showtimeId}
-                                onClick={() => handleTimeSelect(st.time, st.showtimeId, st.screenId)}
+                                key={date}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDateSelect(date);
+                                }}
                                 className={`px-4 py-2 rounded-lg transition-colors ${
-                                  selectedTime === st.time
+                                  selectedDate === date
                                     ? 'bg-red-500 text-white'
                                     : 'bg-gray-100 hover:bg-red-500 hover:text-white'
                                 }`}
                               >
-                                {st.time}
+                                {formatDate(date)}
                               </button>
                             ))}
                           </div>
+                          {selectedDate && (
+                            <>
+                              <p className="text-sm font-medium mb-2">Select Showtime</p>
+                              <div className="flex flex-wrap gap-2">
+                                {getShowtimesForSelectedDate().length === 0 ? (
+                                  <span className="text-gray-500">No showtimes for this date.</span>
+                                ) : (
+                                  getShowtimesForSelectedDate().map((st) => (
+                                    <button
+                                      key={st._id}
+                                      onClick={() => handleTimeSelect(st)}
+                                      className={`px-4 py-2 rounded-lg transition-colors ${
+                                        selectedTime === st._id
+                                          ? 'bg-red-500 text-white'
+                                          : 'bg-gray-100 hover:bg-red-500 hover:text-white'
+                                      }`}
+                                    >
+                                      {new Date(st.showDateTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                    </button>
+                                  ))
+                                )}
+                              </div>
+                            </>
+                          )}
                         </div>
                       )}
                     </div>
@@ -218,24 +289,18 @@ function MovieDetails() {
       </div>
 
       {showLoginPrompt && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-8 max-w-md w-full mx-4">
-            <h3 className="text-xl font-bold mb-4">Login Required</h3>
-            <p className="text-gray-600 mb-6">Please log in to continue with your booking.</p>
-            <div className="flex justify-end space-x-4">
-              <button
-                onClick={() => setShowLoginPrompt(false)}
-                className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleLogin}
-                className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
-              >
-                Login
-              </button>
-            </div>
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-md w-full p-6 text-center">
+            <h3 className="text-2xl font-bold mb-2">Login Required</h3>
+            <p className="text-gray-600 mb-6">
+              You need to be logged in to book tickets.
+            </p>
+            <button
+              onClick={handleLogin}
+              className="px-6 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+            >
+              Login
+            </button>
           </div>
         </div>
       )}
