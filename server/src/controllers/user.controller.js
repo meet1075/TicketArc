@@ -240,54 +240,61 @@ const bookingHistory = asyncHandler(async (req, res) => {
     const userBookings = await Booking.aggregate([
         {
             $match: {
-                userId: new mongoose.Types.ObjectId(req.user._id) // Match bookings for the logged-in user
+                userId: new mongoose.Types.ObjectId(req.user._id)
             }
         },
         {
             $lookup: {
-                from: "showtimes", 
+                from: "showtimes",
                 localField: "showtimeId",
                 foreignField: "_id",
                 as: "showtimeDetails"
             }
         },
-        {
-            $unwind: "$showtimeDetails"  
-        },
+        { $unwind: "$showtimeDetails" },
         {
             $lookup: {
-                from: "movies", 
-                localField: "showtimeDetails.movieId",
+                from: "movies",
+                localField: "movieId",
                 foreignField: "_id",
                 as: "movieDetails"
             }
         },
-        {
-            $unwind: "$movieDetails" 
-        },
+        { $unwind: "$movieDetails" },
         {
             $lookup: {
-                from: "seats",
-                localField: "seats",
+                from: "screens",
+                localField: "screenId",
                 foreignField: "_id",
-                as: "seatDetails"
+                as: "screenDetails"
             }
         },
+        { $unwind: "$screenDetails" },
+        {
+            $lookup: {
+                from: "theaters",
+                localField: "theaterId",
+                foreignField: "_id",
+                as: "theaterDetails"
+            }
+        },
+        { $unwind: "$theaterDetails" },
         {
             $project: {
                 _id: 1,
                 movie: {
                     title: "$movieDetails.title",
-                    genre: "$movieDetails.genre",
-                    duration: "$movieDetails.duration",
-                    language: "$movieDetails.language",
-                    releaseDate: "$movieDetails.releaseDate"
+                    movieImage: "$movieDetails.movieImage"
                 },
                 showtime: {
-                    dateTime: "$showtimeDetails.dateTime",
-                    screen: "$showtimeDetails.screen"
+                    dateTime: "$showtimeDetails.showDateTime",
+                    screen: "$screenDetails.screenNumber"
                 },
-                seats: "$seatDetails",
+                theater: {
+                    name: "$theaterDetails.name",
+                    location: "$theaterDetails.location.city"
+                },
+                seats: "$seats",
                 totalAmount: 1,
                 bookingStatus: 1,
                 bookingTime: 1

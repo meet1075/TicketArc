@@ -40,8 +40,16 @@ function Bookings() {
     navigate('/login');
   };
 
-  const formatDate = (dateTime) => new Date(dateTime).toLocaleDateString();
-  const formatTime = (dateTime) => new Date(dateTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  const formatDate = (dateTime) => {
+    if (!dateTime) return 'Invalid Date';
+    const d = new Date(dateTime);
+    return isNaN(d) ? 'Invalid Date' : d.toLocaleDateString();
+  };
+  const formatTime = (dateTime) => {
+    if (!dateTime) return 'Invalid Date';
+    const d = new Date(dateTime);
+    return isNaN(d) ? 'Invalid Date' : d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
 
   if (loading) {
     return (
@@ -101,34 +109,34 @@ function Bookings() {
                 <div className="flex flex-col md:flex-row">
                   <div className="md:w-1/4 lg:w-1/5">
                     <img
-                      src={booking.movie.movieImage || 'https://via.placeholder.com/150'}
-                      alt={booking.movie.title}
+                      src={booking.movie?.movieImage || 'https://via.placeholder.com/150'}
+                      alt={booking.movie?.title || 'Movie'}
                       className="w-full h-full object-cover"
                     />
                   </div>
                   <div className="p-6 flex-1">
                     <div className="flex flex-wrap justify-between items-start mb-4">
-                      <h3 className="text-xl font-bold">{booking.movie.title}</h3>
+                      <h3 className="text-xl font-bold">{booking.movie?.title || 'N/A'}</h3>
                       <span className="bg-red-100 text-red-600 px-3 py-1 rounded-full text-sm font-medium">
-                        {booking._id}
+                        Screen: {booking.showtime?.screen ?? 'N/A'}
                       </span>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                       <div className="flex items-center space-x-2 text-gray-600">
                         <Calendar className="w-5 h-5 text-gray-500" />
-                        <span>Date: {formatDate(booking.showtime.dateTime)}</span>
+                        <span>Date: {formatDate(booking.showtime?.dateTime)}</span>
                       </div>
                       <div className="flex items-center space-x-2 text-gray-600">
                         <Clock className="w-5 h-5 text-gray-500" />
-                        <span>Time: {formatTime(booking.showtime.dateTime)}</span>
+                        <span>Time: {formatTime(booking.showtime?.dateTime)}</span>
                       </div>
                       <div className="flex items-center space-x-2 text-gray-600">
                         <MapPin className="w-5 h-5 text-gray-500" />
-                        <span>Theater: {booking.showtime.screen || 'Unknown'}</span>
+                        <span>Theater: {booking.theater?.name || 'Unknown'} ({booking.theater?.location || 'Unknown'})</span>
                       </div>
                       <div className="flex items-center space-x-2 text-gray-600">
                         <Ticket className="w-5 h-5 text-gray-500" />
-                        <span>Seats: {booking.seats.map((seat) => seat.seatNumber).join(', ') || 'N/A'}</span>
+                        <span>Seats: {Array.isArray(booking.seats) && booking.seats.length > 0 ? booking.seats.map((seat) => seat.seatNumber).join(', ') : 'N/A'}</span>
                       </div>
                     </div>
                     <div className="flex flex-wrap justify-between items-center pt-4 border-t border-gray-100">
@@ -136,7 +144,7 @@ function Bookings() {
                         <p className="text-sm text-gray-500">
                           Booked on {formatDate(booking.bookingTime)}
                         </p>
-                        <p className="text-lg font-bold">Total: ${booking.totalAmount.toFixed(2)}</p>
+                        <p className="text-lg font-bold">Total: ₹{booking.totalAmount?.toFixed(2) || '0.00'}</p>
                       </div>
                       <div className="flex space-x-3 mt-4 md:mt-0">
                         <button className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors">
