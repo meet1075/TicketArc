@@ -1,14 +1,17 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Film, Calendar, Clock, MapPin, Ticket, AlertCircle, LogIn, ArrowLeft } from 'lucide-react';
+import { Film, Calendar, Clock, MapPin, Ticket, AlertCircle, LogIn, ArrowLeft, X } from 'lucide-react';
 import { AuthContext } from '../context/AuthContext'; // Adjust path
 import axios from 'axios';
+import ETicket from '../components/ETicket';
 
 function Bookings() {
   const { isLoggedIn } = useContext(AuthContext);
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showETicket, setShowETicket] = useState(false);
+  const [selectedBooking, setSelectedBooking] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -147,7 +150,9 @@ function Bookings() {
                         <p className="text-lg font-bold">Total: ₹{booking.totalAmount?.toFixed(2) || '0.00'}</p>
                       </div>
                       <div className="flex space-x-3 mt-4 md:mt-0">
-                        <button className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors">
+                        <button className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+                          onClick={() => { setSelectedBooking(booking); setShowETicket(true); }}
+                        >
                           View E-Ticket
                         </button>
                         <button className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors">
@@ -178,6 +183,24 @@ function Bookings() {
           </div>
         )}
       </div>
+
+      {/* ETicket Modal */}
+      {showETicket && selectedBooking && (
+        <ETicket 
+          booking={{
+            movieTitle: selectedBooking.movie?.title || 'N/A',
+            theater: `${selectedBooking.theater?.name || 'Unknown'} (${selectedBooking.theater?.location || 'Unknown'})`,
+            date: formatDate(selectedBooking.showtime?.dateTime),
+            time: formatTime(selectedBooking.showtime?.dateTime),
+            seats: Array.isArray(selectedBooking.seats) ? selectedBooking.seats.map(seat => seat.seatNumber) : [],
+            screen: `Screen ${selectedBooking.showtime?.screen ?? 'N/A'}`,
+            totalAmount: selectedBooking.totalAmount || 0,
+            bookingDate: formatDate(selectedBooking.bookingTime)
+          }}
+          onClose={() => setShowETicket(false)}
+          isVisible={showETicket}
+        />
+      )}
     </div>
   );
 }

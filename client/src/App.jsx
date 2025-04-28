@@ -17,6 +17,7 @@ import AdminHome from './pages/AdminHome';
 import PrivacyPolicy from './pages/Policy';
 import TermsConditions from './pages/TermsConditions';
 import Payment from './pages/Payment.jsx';
+import ETicket from './components/ETicket.jsx';
 // import Settings from './pages/Settings';
 
 function App() {
@@ -41,6 +42,7 @@ function App() {
               <Route path="/admin" element={<AdminHome />} />
               <Route path="/privacy-policy" element={<PrivacyPolicy />} />
               <Route path="/terms-conditions" element={<TermsConditions />} />
+              <Route path="/eticket" element={<ETicket />} />
               {/* <Route path="/settings" element={<Settings />} /> */}
             </Routes>
           </div>
