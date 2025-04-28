@@ -8,11 +8,12 @@ import { v4 as uuidv4 } from "uuid";
 import { SeatAvailability } from "../models/seatAvailability.model.js";
 import { ShowTime } from "../models/showtime.model.js";
 const createPayment = asyncHandler(async (req, res) => {
-    const { seatAvailabilityId, paymentMethod, transactionId } = req.body; // Accept transactionId if provided
+    const { seatAvailabilityId, paymentMethod, transactionId, amount } = req.body; // Accept amount if provided
     const userId = req.user?._id;
 
     if (!userId) throw new ApiErrors(401, "User not authenticated");
     if (!seatAvailabilityId) throw new ApiErrors(400, "Missing seatAvailabilityId");
+    if (!amount || amount <= 0) throw new ApiErrors(400, "Invalid amount");
 
     // ✅ Fetch Seat Availability & Populate Seat Type
     const seatAvailability = await SeatAvailability.findById(seatAvailabilityId)
@@ -34,24 +35,15 @@ const createPayment = asyncHandler(async (req, res) => {
       throw new ApiErrors(400, "Seat is not reserved by you or has expired");
     }
 
-    // ✅ Get Correct Seat Type & Price
-    const correctSeatType = seatAvailability.seatId.seatType; // 🎯 Get seat type from Seat model
-    const seatPrice = seatAvailability.showtimeId.price[correctSeatType] || 0;
-
-    if (seatPrice <= 0) throw new ApiErrors(400, "Invalid seat price");
-
-    console.log("🎟️ Seat Type:", correctSeatType);
-    console.log("💰 Seat Price:", seatPrice);
-
     // ✅ Ensure transactionId is provided (generate if missing)
     const paymentTransactionId = transactionId || uuidv4(); // Generate a unique ID if not provided
 
     // ✅ Create Payment
     const payment = await Payment.create({
       userId,
-      amount: seatPrice,
+      amount,
       paymentMethod,
-      transactionId: paymentTransactionId, // ✅ Ensure transactionId is included
+      transactionId: paymentTransactionId,
       paymentStatus: "Completed", // Assuming instant payment success
       seatAvailabilityId: seatAvailability._id,
     });

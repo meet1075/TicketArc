@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft, CreditCard, Smartphone, AlertCircle, Check, X, RefreshCw } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
+import { v4 as uuidv4 } from 'uuid';
 
 const Payment = () => {
   const navigate = useNavigate();
@@ -20,6 +21,7 @@ const Payment = () => {
   const [formErrors, setFormErrors] = useState({});
   const [showtimeDetails, setShowtimeDetails] = useState(null);
   const [fetchError, setFetchError] = useState(null);
+  const [error, setError] = useState(null);
 
   const { state } = location;
 
@@ -103,13 +105,67 @@ const Payment = () => {
     if (!validateForm()) return;
     
     setLoading(true);
-    
-    // Simulate payment processing
-    setTimeout(() => {
+    setError(null);
+
+    try {
+      // Create payment for each selected seat
+      const paymentPromises = bookingDetails.seatAvailabilityIds.map(async (seatAvailabilityId) => {
+        const paymentResponse = await axios.post(
+          'http://localhost:3000/api/v1/payment/createPayment',
+          {
+            seatAvailabilityId,
+            paymentMethod: paymentMethod === 'credit' ? 'Credit Card' : paymentMethod === 'debit' ? 'Debit Card' : 'UPI',
+            transactionId: uuidv4(), // Generate unique transaction ID
+            amount: bookingDetails.totalAmount / bookingDetails.seatAvailabilityIds.length // Divide total amount by number of seats
+          },
+          {
+            headers: { Authorization: `Bearer ${localStorage.getItem('accessToken')}` },
+            withCredentials: true
+          }
+        );
+        return paymentResponse.data.data.payment;
+      });
+
+      const payments = await Promise.all(paymentPromises);
+
+      // Create booking for each payment
+      const bookingPromises = payments.map(async (payment) => {
+        const bookingResponse = await axios.post(
+          `http://localhost:3000/api/v1/booking/create/${payment._id}`,
+          {},
+          {
+            headers: { Authorization: `Bearer ${localStorage.getItem('accessToken')}` },
+            withCredentials: true
+          }
+        );
+        return bookingResponse.data.data.booking;
+      });
+
+      const bookings = await Promise.all(bookingPromises);
+
+      // Clear pending seats from sessionStorage since payment was successful
+      sessionStorage.removeItem('pendingSeatAvailabilityIds');
+
       setStatus('completed');
       setShowConfirmation(true);
+
+      // Navigate to booking confirmation page after successful payment
+      setTimeout(() => {
+        navigate('/bookings', { 
+          state: { 
+            success: true,
+            message: 'Payment successful! Your booking has been confirmed.'
+          }
+        });
+      }, 2000);
+
+    } catch (err) {
+      console.error('Payment error:', err);
+      setError(err.response?.data?.message || 'Payment failed. Please try again.');
+      setStatus('failed');
+    } finally {
       setLoading(false);
-    }, 2000);
+    }
   };
 
   const handleBack = () => {

@@ -61,8 +61,9 @@ const createBooking = asyncHandler(async (req, res) => {
   }
 
   // ✅ Determine Correct Seat Type & Pricing
-  const correctSeatType = seatAvailability.seatId.seatType; // 🎯 Get seat type
-  const seatPrice = showtime.price[correctSeatType] || 0; // 🎯 Get price from Showtime
+  const correctSeatType = seatAvailability.seatId.seatType.charAt(0).toUpperCase() + seatAvailability.seatId.seatType.slice(1).toLowerCase();
+  // Use payment.amount instead of recalculating
+  const seatPrice = payment.amount;
 
   if (seatPrice <= 0) throw new ApiErrors(400, "Invalid seat price");
 
@@ -73,7 +74,7 @@ const createBooking = asyncHandler(async (req, res) => {
     seatId: seatAvailability.seatId._id,
     seatNumber: seatAvailability.seatId.seatNumber || "UNKNOWN",
     seatType: correctSeatType, // ✅ Correct seat type
-    price: seatPrice, // ✅ Correct price
+    price: seatPrice, // ✅ Use payment amount
   }];
 
   console.log("🎟️ Booking Seats:", seats);
@@ -86,7 +87,7 @@ const createBooking = asyncHandler(async (req, res) => {
     screenId: showtime.screenId._id,
     userId,
     seats,
-    totalAmount: seatPrice, // ✅ Ensure totalAmount matches payment amount
+    totalAmount: seatPrice, // ✅ Use payment amount
     paymentId,
     bookingStatus: "Confirmed",
     paymentStatus: "Success",
