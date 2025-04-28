@@ -98,7 +98,6 @@ function MoviesTab({ setModalType, setShowModal, setEditingItem, refreshKey }) {
                     <p>Genre: {movie.genre || 'N/A'}</p>
                     <p>Language: {movie.language || 'N/A'}</p>
                     <p>Duration: {movie.duration} mins</p>
-                    <p>Rating: {movie.rating || 'N/A'} / 10</p>
                     <p className="line-clamp-2">{movie.description}</p>
                   </div>
                 </div>

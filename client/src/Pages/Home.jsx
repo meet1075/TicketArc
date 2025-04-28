@@ -43,8 +43,7 @@ const Home = () => {
 
   const handleSearch = (query) => {
     const filtered = movies.filter((movie) =>
-      [movie.title, Array.isArray(movie.genre) ? movie.genre.join(", ") : movie.genre, movie.language]
-        .some((field) => field.toLowerCase().includes(query.toLowerCase()))
+      movie.title.toLowerCase().includes(query.toLowerCase())
     );
     setFilteredMovies(filtered);
   };
@@ -62,9 +61,7 @@ const Home = () => {
       filtered = filtered.filter((movie) => movie.language === filters.language);
     }
 
-    if (filters.sortBy === "rating") {
-      filtered.sort((a, b) => (b.rating || 0) - (a.rating || 0));
-    } else if (filters.sortBy === "name") {
+    if (filters.sortBy === "name") {
       filtered.sort((a, b) => a.title.localeCompare(b.title));
     }
 
@@ -93,7 +90,6 @@ const Home = () => {
                     title={movie.title}
                     poster={movie.movieImage}
                     genre={Array.isArray(movie.genre) ? movie.genre.join(", ") : movie.genre}
-                    rating={movie.rating || "N/A"}
                     onViewDetails={() => navigate(`/movie/${movie._id}`)}
                   />
                 ))

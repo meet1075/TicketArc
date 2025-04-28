@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Film, Calendar, Clock, MapPin, Ticket, AlertCircle, LogIn, ArrowLeft, X } from 'lucide-react';
+import { Film, Calendar, Clock, MapPin, Ticket, AlertCircle, LogIn, ArrowLeft, X, Check } from 'lucide-react';
 import { AuthContext } from '../context/AuthContext'; // Adjust path
 import axios from 'axios';
 import ETicket from '../components/ETicket';
+import { motion, AnimatePresence } from 'framer-motion';
 
 function Bookings() {
   const { isLoggedIn } = useContext(AuthContext);
@@ -13,6 +14,10 @@ function Bookings() {
   const [showETicket, setShowETicket] = useState(false);
   const [selectedBooking, setSelectedBooking] = useState(null);
   const navigate = useNavigate();
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [showRefundStatus, setShowRefundStatus] = useState(false);
+  const [refundStep, setRefundStep] = useState(0);
+
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -38,6 +43,49 @@ function Bookings() {
       setLoading(false);
     }
   };
+
+  const handleCancelTicket = (booking) => {
+    setSelectedBooking(booking);
+    setShowCancelModal(true);
+  };
+
+  const processCancellation = async () => {
+    setShowCancelModal(false);
+    setShowRefundStatus(true);
+    setRefundStep(0);
+
+    try {
+      // 1. Cancel the booking (this should also release seats and update booking status)
+      await axios.delete(
+        `http://localhost:3000/api/v1/booking/${selectedBooking._id}/cancel`,
+        {
+          headers: { Authorization: `Bearer ${localStorage.getItem('accessToken')}` },
+          withCredentials: true,
+        }
+      );
+
+      // 2. Simulate refund status steps for UI
+      setTimeout(() => setRefundStep(1), 1000); // Processing
+      setTimeout(() => setRefundStep(2), 2500); // Completed
+      setTimeout(() => {
+        setRefundStep(3); // Cancelled
+        setTimeout(() => {
+          setShowRefundStatus(false);
+          setRefundStep(0);
+          // Remove the cancelled booking from the list
+          setBookings((prev) => prev.filter((b) => b._id !== selectedBooking._id));
+          // Set a flag to refetch seats on TheaterSeating page
+          sessionStorage.setItem('refetchSeatsAfterCancel', '1');
+        }, 1500);
+      }, 4000);
+
+    } catch (error) {
+      setShowRefundStatus(false);
+      setRefundStep(0);
+      alert("Failed to cancel booking. Please try again.");
+    }
+  };
+
 
   const handleLoginClick = () => {
     navigate('/login');
@@ -155,8 +203,10 @@ function Bookings() {
                         >
                           View E-Ticket
                         </button>
-                        <button className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors">
-                          Download Ticket
+                        <button 
+                        onClick={() => handleCancelTicket(booking)}
+                        className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors">
+                          Cancel Ticket
                         </button>
                       </div>
                     </div>
@@ -201,6 +251,99 @@ function Bookings() {
           isVisible={showETicket}
         />
       )}
+
+      {/* Cancel Confirmation Modal */}
+      <AnimatePresence>
+        {showCancelModal && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white dark:bg-gray-800 rounded-lg max-w-md w-full p-6"
+            >
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-xl font-bold dark:text-white">Cancel Ticket</h3>
+                <button 
+                  onClick={() => setShowCancelModal(false)}
+                  className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                >
+                  <X size={24} />
+                </button>
+              </div>
+              <p className="text-gray-600 dark:text-gray-300 mb-6">
+                Are you sure you want to cancel your ticket for {selectedBooking?.movieTitle}? 
+                This action cannot be undone.
+              </p>
+              <div className="flex justify-end space-x-4">
+                <button
+                  onClick={() => setShowCancelModal(false)}
+                  className="px-4 py-2 text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100 transition-colors"
+                >
+                  No, Keep Ticket
+                </button>
+                <button
+                  onClick={processCancellation}
+                  className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+                >
+                  Yes, Cancel Ticket
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Refund Status Modal */}
+      <AnimatePresence>
+        {showRefundStatus && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white dark:bg-gray-800 rounded-lg max-w-md w-full p-6 text-center"
+            >
+              <div className="space-y-4">
+                {refundStep === 0 && (
+                  <>
+                    <div className="animate-spin w-12 h-12 border-4 border-red-500 border-t-transparent rounded-full mx-auto"></div>
+                    <h3 className="text-xl font-bold dark:text-white">Processing Refund</h3>
+                    <p className="text-gray-600 dark:text-gray-300">Please wait while we process your refund...</p>
+                  </>
+                )}
+                {refundStep === 1 && (
+                  <>
+                    <div className="w-12 h-12 bg-yellow-100 dark:bg-yellow-900/20 rounded-full flex items-center justify-center mx-auto">
+                      <Clock className="w-6 h-6 text-yellow-500" />
+                    </div>
+                    <h3 className="text-xl font-bold dark:text-white">Refund Initiated</h3>
+                    <p className="text-gray-600 dark:text-gray-300">Your refund is being processed...</p>
+                  </>
+                )}
+                {refundStep === 2 && (
+                  <>
+                    <div className="w-12 h-12 bg-green-100 dark:bg-green-900/20 rounded-full flex items-center justify-center mx-auto">
+                      <Check className="w-6 h-6 text-green-500" />
+                    </div>
+                    <h3 className="text-xl font-bold dark:text-white">Refund Completed</h3>
+                    <p className="text-gray-600 dark:text-gray-300">Your refund has been processed successfully!</p>
+                  </>
+                )}
+                {refundStep === 3 && (
+                  <>
+                    <div className="w-12 h-12 bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center mx-auto">
+                      <X className="w-6 h-6 text-red-500" />
+                    </div>
+                    <h3 className="text-xl font-bold dark:text-white">Ticket Cancelled</h3>
+                    <p className="text-gray-600 dark:text-gray-300">Your ticket has been cancelled successfully.</p>
+                  </>
+                )}
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

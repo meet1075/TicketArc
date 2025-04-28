@@ -2,7 +2,7 @@ import React from 'react';
 import { Star } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
-const MovieCard = ({ id, title, poster, genre, rating, onViewDetails }) => {
+const MovieCard = ({ id, title, poster, genre, onViewDetails }) => {
   const navigate = useNavigate();
 
   return (
@@ -17,10 +17,6 @@ const MovieCard = ({ id, title, poster, genre, rating, onViewDetails }) => {
         <h3 className="text-lg font-semibold mb-2 line-clamp-1">{title}</h3>
         <div className="flex items-center justify-between mb-4">
           <span className="text-gray-600 text-sm">{genre}</span>
-          <div className="flex items-center text-yellow-500">
-            <Star size={16} />
-            <span className="ml-1">{rating}</span>
-          </div>
         </div>
         <button
           onClick={onViewDetails || (() => navigate(`/movie/${id}`))}
