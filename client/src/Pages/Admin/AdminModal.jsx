@@ -251,12 +251,9 @@ function AdminModal({ showModal, setShowModal, modalType, editingItem, setEditin
         }
       }
 
-<<<<<<< HEAD
       const method = (modalType === 'theater' && editingItem?._id) ? 'patch' : (editingItem?._id ? 'put' : 'post');
-      const response = await axios[method](url, data, {
-=======
+      
       let axiosConfig = {
->>>>>>> a564e0c0dbce3b895f2c966f32d9989bda246193
         headers: {
           Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
         },
@@ -265,14 +262,15 @@ function AdminModal({ showModal, setShowModal, modalType, editingItem, setEditin
 
       // For movie, do NOT set Content-Type if sending FormData
       if (modalType === 'movie') {
-        const response = await axios[editingItem?._id ? 'put' : 'post'](url, data, axiosConfig);
+        const movieResponse = await axios[editingItem?._id ? 'patch' : 'post'](url, data, axiosConfig);
         setShowModal(false);
         if (refresh) refresh();
         return;
       }
+
       // For other types, set Content-Type to application/json
       axiosConfig.headers['Content-Type'] = 'application/json';
-      const response = await axios[editingItem?._id ? 'put' : 'post'](url, data, axiosConfig);
+      const response = await axios[method](url, data, axiosConfig);
       setShowModal(false);
       if (refresh) refresh();
     } catch (err) {
