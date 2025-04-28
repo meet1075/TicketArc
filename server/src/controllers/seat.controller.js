@@ -145,11 +145,23 @@ const getSeatLayoutForShowtime = asyncHandler(async (req, res) => {
       throw new ApiErrors(404, "Screen not found");
     }
 
-    // Fetch the showtime to get seat prices
+    // Fetch the showtime to get seat prices and status
     const showtime = await ShowTime.findById(showtimeId);
     if (!showtime) {
       throw new ApiErrors(404, "Showtime not found");
     }
+
+    // Check if showtime is completed
+    if (showtime.status === "Completed" || new Date(showtime.showDateTime) < new Date()) {
+      // Return a special response for completed showtimes
+      return res.status(200).json(new ApiResponse(200, { 
+        isCompleted: true,
+        message: "This showtime has been completed",
+        showDateTime: showtime.showDateTime,
+        status: showtime.status
+      }, "Showtime is completed"));
+    }
+
     const showtimePrices = showtime.price || { Regular: 0, Premium: 0 };
 
     // Get the number of rows and columns from the screen model
@@ -178,6 +190,19 @@ const getSeatLayoutForShowtime = asyncHandler(async (req, res) => {
         const existingSeat = existingSeatsMap.get(seatNumber);
         const availability = availabilityMap.get(seatNumber);
         const seatType = existingSeat?.seatType || "regular";
+        
+        // Determine seat status
+        let seatStatus = "available";
+        let statusMessage = "Available";
+        
+        if (!availability?.isAvailable) {
+          seatStatus = "booked";
+          statusMessage = "Already Booked";
+        } else if (availability?.isReserved && new Date() < availability?.reservationExpiry) {
+          seatStatus = "reserved";
+          statusMessage = "Temporarily Reserved";
+        }
+        
         rowSeats.push({
           seatNumber,
           seatType,
@@ -185,7 +210,9 @@ const getSeatLayoutForShowtime = asyncHandler(async (req, res) => {
           isReserved: availability?.isReserved ?? false,
           reservationExpiry: availability?.reservationExpiry || null,
           seatAvailabilityId: availability?._id || null,
-          price: seatType.toLowerCase() === "premium" ? showtimePrices.Premium : showtimePrices.Regular
+          price: seatType.toLowerCase() === "premium" ? showtimePrices.Premium : showtimePrices.Regular,
+          status: seatStatus,
+          statusMessage: statusMessage
         });
       }
       seatLayout.push({
@@ -195,7 +222,11 @@ const getSeatLayoutForShowtime = asyncHandler(async (req, res) => {
       });
     }
   
-    return res.status(200).json(new ApiResponse(200, { layout: seatLayout, totalSeats: screen.totalSeats }, "Seat layout fetched successfully"));
+    return res.status(200).json(new ApiResponse(200, { 
+      isCompleted: false,
+      layout: seatLayout, 
+      totalSeats: screen.totalSeats 
+    }, "Seat layout fetched successfully"));
 });
 
 const createSeatAvailabilityForShowtime = asyncHandler(async (req, res) => {
@@ -271,16 +302,44 @@ const confirmSeatBooking = asyncHandler(async (req, res) => {
     throw new ApiErrors(401, "User not authenticated");
   }
 
-  const seat = await SeatAvailability.findById(seatAvailabilityId).select("seatNumber isAvailable isReserved reservedBy reservationExpiry");
+  const seat = await SeatAvailability.findById(seatAvailabilityId)
+    .populate({
+      path: "showtimeId",
+      select: "status showDateTime"
+    })
+    .select("seatNumber isAvailable isReserved reservedBy reservationExpiry");
 
   if (!seat) {
     throw new ApiErrors(404, "Seat not found");
   }
-  if (!seat.isAvailable) {
-    throw new ApiErrors(400, "Seat is already booked");
+
+  // Check if showtime is completed
+  if (seat.showtimeId.status === "Completed" || new Date(seat.showtimeId.showDateTime) < new Date()) {
+    // Return a special response for completed showtimes
+    return res.status(200).json(new ApiResponse(200, { 
+      isCompleted: true,
+      message: "This showtime has been completed",
+      showDateTime: seat.showtimeId.showDateTime,
+      status: seat.showtimeId.status
+    }, "Showtime is completed"));
   }
+
+  // Check seat availability with detailed messages
+  if (!seat.isAvailable) {
+    return res.status(200).json(new ApiResponse(200, { 
+      isBooked: true,
+      seatNumber: seat.seatNumber,
+      message: "This seat is already booked"
+    }, "Seat is already booked"));
+  }
+  
   if (seat.isReserved && new Date() < seat.reservationExpiry) {
-    throw new ApiErrors(400, "Seat is already reserved by another user");
+    return res.status(200).json(new ApiResponse(200, { 
+      isReserved: true,
+      seatNumber: seat.seatNumber,
+      message: "This seat is temporarily reserved by another user",
+      reservationExpiry: seat.reservationExpiry
+    }, "Seat is temporarily reserved"));
   }
 
   const updatedSeat = await SeatAvailability.findByIdAndUpdate(
@@ -298,7 +357,10 @@ const confirmSeatBooking = asyncHandler(async (req, res) => {
 
   return res
     .status(200)
-    .json(new ApiResponse(200, updatedSeat, "Seat reserved successfully for 5 minutes"));
+    .json(new ApiResponse(200, { 
+      isCompleted: false,
+      seat: updatedSeat 
+    }, "Seat reserved successfully for 5 minutes"));
 });
 
 const cancelSeatBooking = asyncHandler(async (req, res) => {

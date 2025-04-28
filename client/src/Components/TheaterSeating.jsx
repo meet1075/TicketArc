@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { X, Check, ArrowLeft, CreditCard } from 'lucide-react';
+import { X, Check, ArrowLeft, CreditCard, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
 
@@ -21,6 +21,7 @@ const TheaterSeating = () => {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [toast, setToast] = useState({ show: false, message: '', type: 'error' });
 
   // Get JWT token from localStorage or your auth mechanism
   const token = localStorage.getItem('accessToken'); // Use the correct key for your token
@@ -32,6 +33,15 @@ const TheaterSeating = () => {
       Authorization: token ? `Bearer ${token}` : '',
     },
   });
+
+  // Function to show toast message
+  const showToast = (message, type = 'error') => {
+    setToast({ show: true, message, type });
+    // Auto-hide toast after 3 seconds
+    setTimeout(() => {
+      setToast({ show: false, message: '', type: 'error' });
+    }, 3000);
+  };
 
   useEffect(() => {
     const fetchAllDetails = async () => {
@@ -126,6 +136,13 @@ const TheaterSeating = () => {
       .flatMap(row => row.seats)
       .find(s => s.seatNumber === seatNumber);
 
+    // Check if seat is already booked or reserved
+    if (!seat.isAvailable || (seat.isReserved && !selectedSeats.includes(seatNumber))) {
+      // Show toast message for booked or reserved seats
+      showToast(`Seat ${seatNumber} is ${!seat.isAvailable ? 'already booked' : 'temporarily reserved'}`);
+      return;
+    }
+
     setSelectedSeats(prev => {
       if (prev.includes(seatNumber)) {
         return prev.filter(seat => seat !== seatNumber);
@@ -142,7 +159,7 @@ const TheaterSeating = () => {
       setSelectedSeats(prev => prev.filter(seat => seat !== seatNumber));
     } catch (err) {
       console.error('Error canceling seat:', err);
-      setError(`Failed to cancel seat reservation: ${err.response?.data?.message || err.message || 'Unknown error'}`);
+      showToast(`Failed to cancel seat reservation: ${err.response?.data?.message || err.message || 'Unknown error'}`);
     }
   };
 
@@ -163,17 +180,39 @@ const TheaterSeating = () => {
   const handleProceedToPayment = async () => {
     try {
       // Find seatAvailabilityIds for selected seats
-      const seatAvailabilityIds = seatLayout
+      const selectedSeatDetails = seatLayout
         .flatMap(row => row.seats)
-        .filter(seat => selectedSeats.includes(seat.seatNumber))
-        .map(seat => seat.seatAvailabilityId);
+        .filter(seat => selectedSeats.includes(seat.seatNumber));
+      
+      // Check if any selected seat is already booked or reserved
+      const unavailableSeats = selectedSeatDetails.filter(
+        seat => !seat.isAvailable || (seat.isReserved && !selectedSeats.includes(seat.seatNumber))
+      );
+      
+      if (unavailableSeats.length > 0) {
+        const seatNumbers = unavailableSeats.map(seat => seat.seatNumber).join(', ');
+        showToast(`The following seats are no longer available: ${seatNumbers}. Please select different seats.`);
+        return;
+      }
+      
+      const seatAvailabilityIds = selectedSeatDetails.map(seat => seat.seatAvailabilityId);
 
       // Call confirmSeatBooking for each selected seat
-      await Promise.all(
+      const results = await Promise.all(
         seatAvailabilityIds.map(id =>
           api.patch(`/seatAvailability/confirmSeatBooking/${id}`)
         )
       );
+      
+      // Check if any seat reservation failed
+      const failedReservations = results.filter(result => 
+        result.data?.data?.isBooked || result.data?.data?.isReserved
+      );
+      
+      if (failedReservations.length > 0) {
+        showToast('Some seats are no longer available. Please select different seats.');
+        return;
+      }
 
       // Store the seatAvailabilityIds in sessionStorage for potential release
       sessionStorage.setItem('pendingSeatAvailabilityIds', JSON.stringify(seatAvailabilityIds));
@@ -182,7 +221,7 @@ const TheaterSeating = () => {
       navigate('/payment', {
         state: {
           movieTitle: movieDetails.title,
-          showtime: showtimeId,
+          showtimeId: showtimeId,
           seats: selectedSeats,
           totalAmount: getTotalAmount(),
           theater: movieDetails.cinema,
@@ -191,7 +230,7 @@ const TheaterSeating = () => {
         },
       });
     } catch (err) {
-      setError('Failed to reserve seats. Please try again.');
+      showToast('Failed to reserve seats. Please try again.');
     }
   };
 
@@ -241,6 +280,27 @@ const TheaterSeating = () => {
           </div>
         </div>
       </div>
+
+      {/* Toast Notification */}
+      <AnimatePresence>
+        {toast.show && (
+          <motion.div
+            initial={{ opacity: 0, y: -50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -50 }}
+            className="fixed top-24 left-1/2 transform -translate-x-1/2 z-50 bg-white dark:bg-gray-800 shadow-lg rounded-lg px-4 py-3 flex items-center space-x-2"
+          >
+            <AlertCircle className={`w-5 h-5 ${toast.type === 'error' ? 'text-red-500' : 'text-green-500'}`} />
+            <span className="text-gray-800 dark:text-gray-200">{toast.message}</span>
+            <button 
+              onClick={() => setToast({ show: false, message: '', type: 'error' })}
+              className="ml-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+            >
+              <X size={16} />
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Seating Layout */}
       <div className="container mx-auto px-4 py-8">
