@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft, CreditCard, Smartphone, AlertCircle, Check, X, RefreshCw } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import axios from 'axios';
 
 const Payment = () => {
   const navigate = useNavigate();
@@ -10,23 +11,97 @@ const Payment = () => {
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState('pending');
   const [showConfirmation, setShowConfirmation] = useState(false);
+  const [formData, setFormData] = useState({
+    cardNumber: '',
+    expiryDate: '',
+    cvv: '',
+    upiId: ''
+  });
+  const [formErrors, setFormErrors] = useState({});
+  const [showtimeDetails, setShowtimeDetails] = useState(null);
+  const [fetchError, setFetchError] = useState(null);
 
   const { state } = location;
 
-const bookingDetails = state || {
-  movieTitle: "N/A",
-  showtime: "N/A",
-  seats: [],
-  totalAmount: 0,
-  theater: "N/A",
-  location: "N/A"
-};
+  const bookingDetails = state || {
+    movieTitle: "N/A",
+    showtime: "N/A",
+    seats: [],
+    totalAmount: 0,
+    theater: "N/A",
+    location: "N/A"
+  };
+
   useEffect(() => {
     window.scrollTo(0, 0);
-  }, []);
+    if (bookingDetails.showtimeId) {
+      fetchShowtimeDetails();
+    }
+  }, [bookingDetails.showtimeId]);
+
+  const fetchShowtimeDetails = async () => {
+    try {
+      const token = localStorage.getItem('accessToken');
+      const response = await axios.get(`http://localhost:3000/api/v1/showtime/getShowtime/${bookingDetails.showtimeId}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        withCredentials: true,
+      });
+      setShowtimeDetails(response.data.data);
+    } catch (err) {
+      setFetchError(err.response?.data?.message || 'Failed to fetch showtime details');
+      console.error('Error fetching showtime:', err);
+    }
+  };
+
+  const validateForm = () => {
+    const errors = {};
+    const cardNumberRegex = /^\d{16}$/;
+    const expiryDateRegex = /^(0[1-9]|1[0-2])\/(20[2-9][0-9]|2[1-9][0-9]{2})$/;
+    const cvvRegex = /^\d{3,}$/;
+    const upiIdRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9]+$/;
+
+    if (paymentMethod !== 'upi') {
+      if (!formData.cardNumber) {
+        errors.cardNumber = 'Card number is required';
+      } else if (!cardNumberRegex.test(formData.cardNumber.replace(/\s/g, ''))) {
+        errors.cardNumber = 'Invalid card number';
+      }
+
+      if (!formData.expiryDate) {
+        errors.expiryDate = 'Expiry date is required';
+      } else if (!expiryDateRegex.test(formData.expiryDate)) {
+        errors.expiryDate = 'Invalid expiry date (MM/YYYY)';
+      }
+
+      if (!formData.cvv) {
+        errors.cvv = 'CVV is required';
+      } else if (!cvvRegex.test(formData.cvv)) {
+        errors.cvv = 'CVV must be at least 3 digits';
+      }
+    } else {
+      if (!formData.upiId) {
+        errors.upiId = 'UPI ID is required';
+      } else if (!upiIdRegex.test(formData.upiId)) {
+        errors.upiId = 'Invalid UPI ID';
+      }
+    }
+
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
 
   const handlePayment = async (e) => {
     e.preventDefault();
+    if (!validateForm()) return;
+    
     setLoading(true);
     
     // Simulate payment processing
@@ -56,6 +131,13 @@ const bookingDetails = state || {
     }
   };
 
+  const isFormValid = () => {
+    if (paymentMethod !== 'upi') {
+      return formData.cardNumber && formData.expiryDate && formData.cvv;
+    }
+    return formData.upiId;
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pt-16">
       {/* Back Button */}
@@ -68,14 +150,12 @@ const bookingDetails = state || {
 
       {/* Header */}
       <div className="bg-gradient-to-r from-red-600 to-red-800 text-white py-8">
-        <div className="container mx-auto px-4">
+        <div className="container mx-auto px-4 text-center">
           <h1 className="text-2xl font-bold mb-2">Payment</h1>
-          <div className="flex flex-wrap items-center gap-2 text-gray-100">
+          <div className="flex flex-wrap items-center justify-center gap-2 text-gray-100">
             <span>{bookingDetails.movieTitle}</span>
             <span>•</span>
             <span>{bookingDetails.theater}</span>
-            <span>•</span>
-            <span>{bookingDetails.showtime}</span>
           </div>
         </div>
       </div>
@@ -141,9 +221,15 @@ const bookingDetails = state || {
                       </label>
                       <input
                         type="text"
+                        name="cardNumber"
+                        value={formData.cardNumber}
+                        onChange={handleInputChange}
                         placeholder="1234 5678 9012 3456"
                         className="w-full p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                       />
+                      {formErrors.cardNumber && (
+                        <p className="text-red-500 text-sm mt-1">{formErrors.cardNumber}</p>
+                      )}
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
@@ -152,9 +238,15 @@ const bookingDetails = state || {
                         </label>
                         <input
                           type="text"
-                          placeholder="MM/YY"
+                          name="expiryDate"
+                          value={formData.expiryDate}
+                          onChange={handleInputChange}
+                          placeholder="MM/YYYY"
                           className="w-full p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                         />
+                        {formErrors.expiryDate && (
+                          <p className="text-red-500 text-sm mt-1">{formErrors.expiryDate}</p>
+                        )}
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -162,9 +254,15 @@ const bookingDetails = state || {
                         </label>
                         <input
                           type="text"
+                          name="cvv"
+                          value={formData.cvv}
+                          onChange={handleInputChange}
                           placeholder="123"
                           className="w-full p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                         />
+                        {formErrors.cvv && (
+                          <p className="text-red-500 text-sm mt-1">{formErrors.cvv}</p>
+                        )}
                       </div>
                     </div>
                   </>
@@ -177,15 +275,21 @@ const bookingDetails = state || {
                     </label>
                     <input
                       type="text"
+                      name="upiId"
+                      value={formData.upiId}
+                      onChange={handleInputChange}
                       placeholder="username@upi"
                       className="w-full p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                     />
+                    {formErrors.upiId && (
+                      <p className="text-red-500 text-sm mt-1">{formErrors.upiId}</p>
+                    )}
                   </div>
                 )}
 
                 <button
                   type="submit"
-                  disabled={loading}
+                  disabled={loading || !isFormValid()}
                   className="w-full bg-red-500 text-white py-3 rounded-lg hover:bg-red-600 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
                 >
                   {loading ? (
@@ -219,7 +323,12 @@ const bookingDetails = state || {
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-gray-600 dark:text-gray-300">Showtime</span>
-                    <span className="font-medium dark:text-white">{bookingDetails.showtime}</span>
+                    <span className="font-medium dark:text-white">
+                      {showtimeDetails ? 
+                        new Date(showtimeDetails.showDateTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) :
+                        'Loading...'
+                      }
+                    </span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-gray-600 dark:text-gray-300">Seats</span>

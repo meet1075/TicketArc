@@ -200,7 +200,7 @@ function MovieDetails() {
                                     : 'bg-gray-100 hover:bg-red-500 hover:text-white'
                                 }`}
                               >
-                                {st.time} (${st.price})
+                                {st.time}
                               </button>
                             ))}
                           </div>
