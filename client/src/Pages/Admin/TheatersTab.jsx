@@ -194,20 +194,6 @@ function TheatersTab({ setModalType, setShowModal, setEditingItem, refreshKey })
                     )}
                   </div>
                 </div>
-                <div>
-                  <h4 className="font-medium mb-2 text-sm">Facilities</h4>
-                  <div className="flex flex-wrap gap-2">
-                    {theater.facilities?.length > 0 ? (
-                      theater.facilities.map((facility, index) => (
-                        <span key={index} className="bg-gray-100 text-gray-700 px-2 py-1 rounded-full text-xs">
-                          {facility}
-                        </span>
-                      ))
-                    ) : (
-                      <p className="text-gray-600 text-sm">No facilities listed.</p>
-                    )}
-                  </div>
-                </div>
                 <div className="flex gap-2">
                   <button
                     onClick={() => handleEdit(theater)}

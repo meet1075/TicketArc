@@ -52,7 +52,6 @@ function AdminModal({ showModal, setShowModal, modalType, editingItem, setEditin
           name: '',
           location: { city: '', state: '' },
           screens: [],
-          facilities: '',
           screenNumber: '',
           screenType: '2D',
           totalSeats: '',
@@ -66,27 +65,8 @@ function AdminModal({ showModal, setShowModal, modalType, editingItem, setEditin
         });
       } else if (modalType === 'theater') {
         setFormData({
-          title: '',
-          movieImage: null,
-          genre: '',
-          duration: '',
-          description: '',
-          language: '',
-          releaseDate: '',
           name: editingItem.name || '',
           location: editingItem.location || { city: '', state: '' },
-          screens: editingItem.screens || [],
-          facilities: Array.isArray(editingItem.facilities) ? editingItem.facilities.join(', ') : editingItem.facilities || '',
-          screenNumber: '',
-          screenType: '2D',
-          totalSeats: '',
-          theaterId: '',
-          numberOfRows: '',
-          numberOfColumns: '',
-          premiumRows: [],
-          movieId: '',
-          showtime: '',
-          price: { Premium: '', Regular: '' },
         });
       } else if (modalType === 'screen') {
         setFormData({
@@ -100,7 +80,6 @@ function AdminModal({ showModal, setShowModal, modalType, editingItem, setEditin
           name: '',
           location: { city: '', state: '' },
           screens: [],
-          facilities: '',
           screenNumber: editingItem.screenNumber || '',
           screenType: editingItem.screenType || '2D',
           totalSeats: editingItem.totalSeats || '',
@@ -125,7 +104,6 @@ function AdminModal({ showModal, setShowModal, modalType, editingItem, setEditin
         name: '',
         location: { city: '', state: '' },
         screens: [],
-        facilities: '',
         screenNumber: '',
         screenType: '2D',
         totalSeats: '',
@@ -206,7 +184,8 @@ function AdminModal({ showModal, setShowModal, modalType, editingItem, setEditin
 
         try {
           // Create or update the screen
-          const screenResponse = await axios[editingItem?._id ? 'put' : 'post'](url, data, {
+          const screenMethod = editingItem?._id ? 'patch' : 'post';
+          const screenResponse = await axios[screenMethod](url, data, {
             headers: {
               Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
               'Content-Type': 'application/json',
@@ -272,7 +251,8 @@ function AdminModal({ showModal, setShowModal, modalType, editingItem, setEditin
         }
       }
 
-      const response = await axios[editingItem?._id ? 'put' : 'post'](url, data, {
+      const method = (modalType === 'theater' && editingItem?._id) ? 'patch' : (editingItem?._id ? 'put' : 'post');
+      const response = await axios[method](url, data, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
           'Content-Type': 'application/json',
@@ -302,7 +282,6 @@ function AdminModal({ showModal, setShowModal, modalType, editingItem, setEditin
       name: '',
       location: { city: '', state: '' },
       screens: [],
-      facilities: '',
       screenNumber: '',
       screenType: '2D',
       totalSeats: '',
@@ -466,16 +445,6 @@ function AdminModal({ showModal, setShowModal, modalType, editingItem, setEditin
                         value={formData.location.state}
                         onChange={handleInputChange}
                         required
-                        className="w-full p-2 border rounded-md"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Facilities (comma-separated)</label>
-                      <input
-                        type="text"
-                        name="facilities"
-                        value={formData.facilities}
-                        onChange={handleInputChange}
                         className="w-full p-2 border rounded-md"
                       />
                     </div>
