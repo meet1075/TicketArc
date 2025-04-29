@@ -13,14 +13,14 @@ const createBooking = asyncHandler(async (req, res) => {
 
   if (!userId) throw new ApiErrors(401, "User not authenticated");
 
-  // ✅ Validate Payment
+  
   const payment = await Payment.findById(paymentId);
   if (!payment) throw new ApiErrors(404, "Payment not found");
   if (payment.paymentStatus !== "Completed") {
     throw new ApiErrors(400, "Payment is not completed. Cannot confirm booking.");
   }
 
-  // ✅ Fetch Seat Availability & Seat Data
+  
   const seatAvailability = await SeatAvailability.findById(payment.seatAvailabilityId)
     .populate({
       path: "seatId",
@@ -44,25 +44,25 @@ const createBooking = asyncHandler(async (req, res) => {
   console.log("⏳ Reservation Expiry:", seatAvailability.reservationExpiry);
   console.log("🕒 Current Time:", new Date());
 
-  // ✅ Ensure Seat is Still Reserved
+  
   if (!seatAvailability.isReserved || new Date() > seatAvailability.reservationExpiry) {
     throw new ApiErrors(400, "Seat reservation has expired.");
   }
 
-  // ✅ Fetch Correct Showtime Data
+  
   const showtime = seatAvailability.showtimeId;
   if (!showtime || !showtime.price) {
     throw new ApiErrors(400, "Showtime details are incomplete or missing.");
   }
 
-  // ✅ Ensure Screen and Theater Data Exist
+  
   if (!showtime.screenId || !showtime.screenId.theaterId) {
     throw new ApiErrors(400, "Theater information is missing from screen data.");
   }
 
-  // ✅ Determine Correct Seat Type & Pricing
+  
   const correctSeatType = seatAvailability.seatId.seatType.charAt(0).toUpperCase() + seatAvailability.seatId.seatType.slice(1).toLowerCase();
-  // Use payment.amount instead of recalculating
+  
   const seatPrice = payment.amount;
 
   if (seatPrice <= 0) throw new ApiErrors(400, "Invalid seat price");
@@ -74,32 +74,32 @@ const createBooking = asyncHandler(async (req, res) => {
     seatId: seatAvailability.seatId._id,
     seatNumber: seatAvailability.seatId.seatNumber || "UNKNOWN",
     seatType: correctSeatType, // ✅ Correct seat type
-    price: seatPrice, // ✅ Use payment amount
+    price: seatPrice, 
   }];
 
   console.log("🎟️ Booking Seats:", seats);
 
-  // ✅ Create Booking
+  
   const booking = await Booking.create({
     showtimeId: showtime._id,
     movieId: showtime.movieId._id,
-    theaterId: showtime.screenId.theaterId._id, // ✅ Ensure this exists
+    theaterId: showtime.screenId.theaterId._id, 
     screenId: showtime.screenId._id,
     userId,
     seats,
-    totalAmount: seatPrice, // ✅ Use payment amount
+    totalAmount: seatPrice, 
     paymentId,
     bookingStatus: "Confirmed",
     paymentStatus: "Success",
   });
 
-  // ✅ Update Seat Status
+  
   await SeatAvailability.updateOne(
     { _id: payment.seatAvailabilityId },
     { $set: { isBooked: true, isReserved: false, reservedBy: null, reservationExpiry: null } }
   );
 
-  // ✅ Attach bookingId to Payment
+  
   payment.bookingId = booking._id;
   await payment.save();
 
@@ -112,27 +112,27 @@ const getBookingDetails = asyncHandler(async (req, res) => {
   const booking = await Booking.findById(bookingId)
     .populate({
       path: "showtimeId",
-      select: "showDateTime", // ✅ Only fetch showtime date & time
+      select: "showDateTime", 
     })
     .populate({
       path: "movieId",
-      select: "title", // ✅ Only fetch movie title
+      select: "title",  
     })
     .populate({
       path: "screenId",
-      select: "screenNumber", // ✅ Only fetch screen number
+      select: "screenNumber", 
     })
     .populate({
       path: "seats.seatId",
-      select: "seatNumber seatType", // ✅ Only fetch seat details
+      select: "seatNumber seatType",  
     })
-    .select("seats totalAmount"); // ✅ Limit response to only required fields
+    .select("seats totalAmount"); 
 
   if (!booking) {
     throw new ApiErrors(404, "Booking not found.");
   }
 
-  // ✅ Format the response with only necessary details
+  
   const formattedBooking = {
     showtime: booking.showtimeId?.showDateTime || "N/A",
     movie: booking.movieId?.title || "N/A",
@@ -154,7 +154,7 @@ const getBookingDetails = asyncHandler(async (req, res) => {
 const cancelBooking = asyncHandler(async (req, res) => {
   const { bookingId } = req.params;
 
-  // ✅ Find the booking and populate seat data
+  
   const booking = await Booking.findById(bookingId).populate("seats.seatId");
 
   if (!booking) throw new ApiErrors(404, "Booking not found.");
@@ -162,20 +162,20 @@ const cancelBooking = asyncHandler(async (req, res) => {
     throw new ApiErrors(400, "Only confirmed bookings can be cancelled.");
   }
 
-  // ✅ Extract valid seat IDs
+  
   const seatIds = booking.seats
     .map((seat) => seat.seatId?._id)
-    .filter(Boolean); // Remove null values
+    .filter(Boolean); 
 
   if (seatIds.length > 0) {
-    // ✅ Ensure seats are properly released for the correct showtime
+    
     await SeatAvailability.updateMany(
       { seatId: { $in: seatIds }, showtimeId: booking.showtimeId },
       {
         $set: {
           isBooked: false,
           isReserved: false,
-          isAvailable: true, // ✅ Ensure availability is updated
+          isAvailable: true, 
           reservedBy: null,
           reservationExpiry: null
         }
@@ -183,7 +183,7 @@ const cancelBooking = asyncHandler(async (req, res) => {
     );
   }
 
-  // ✅ Update related Payment status to 'Refunded'
+  
   if (booking.paymentId) {
     const payment = await Payment.findById(booking.paymentId);
     if (payment) {
@@ -193,7 +193,7 @@ const cancelBooking = asyncHandler(async (req, res) => {
     }
   }
 
-  // ✅ Delete the booking from the database
+  
   await Booking.deleteOne({ _id: bookingId });
 
   return res.status(200).json(new ApiResponse(
@@ -205,18 +205,18 @@ const cancelBooking = asyncHandler(async (req, res) => {
 const getAllBookingsOfShowTime = asyncHandler(async (req, res) => {
   const { showtimeId } = req.params;
 
-  // ✅ Fetch necessary details: User's userName & seat numbers
+  
   const bookings = await Booking.find({ showtimeId })
     .populate({
       path: "userId",
-      select: "userName _id", // ✅ Fetch userName instead of fullName
+      select: "userName _id", 
     })
     .populate({
       path: "seats.seatId",
-      select: "seatNumber", // ✅ Fetch only seat numbers
+      select: "seatNumber", 
     });
 
-  // ✅ Transform response to show userName instead of ID
+  
   const formattedBookings = bookings.map((booking) => ({
     user: booking.userId?.userName || `User-${booking.userId?._id.slice(-4)}`,
     seats: booking.seats.map((seat) => seat.seatId?.seatNumber || "Unknown"),
@@ -230,27 +230,27 @@ const getAllBookingsOfShowTime = asyncHandler(async (req, res) => {
 const getAllBookingsOfUser = asyncHandler(async (req, res) => {
   const { userId } = req.params;
 
-  // ✅ Ensure correct field names (check your schema)
+ 
   const bookings = await Booking.find({ userId })
     .populate({
-      path: "showtimeId", // ✅ Make sure this exists in the schema
-      select: "date time", // ✅ Adjust fields based on your ShowTime model
+      path: "showtimeId", 
+      select: "date time", 
     })
     .populate({
       path: "movieId",
-      select: "title", // ✅ Fetch only movie title
+      select: "title", 
     })
     .populate({
       path: "theaterId",
-      select: "name location", // ✅ Fetch theater name & location
+      select: "name location", 
     })
     .populate({
       path: "screenId",
-      select: "screenNumber", // ✅ Fetch screen number
+      select: "screenNumber", 
     })
     .populate({
       path: "seats.seatId",
-      select: "seatNumber", // ✅ Fetch seat number
+      select: "seatNumber", 
     });
 
   return res.status(200).json(
@@ -264,7 +264,7 @@ const seatAvailability = asyncHandler(async (req, res) => {
 
   console.log("Checking seat availability for showtimeId:", showtimeId);
 
-  // ✅ Fetch all seats for this showtime
+  
   const allSeats = await SeatAvailability.find({ showtimeId }).select("seatNumber isBooked");
 
   if (!allSeats.length) {
@@ -274,7 +274,7 @@ const seatAvailability = asyncHandler(async (req, res) => {
 
   console.log("All Seats in DB:", allSeats);
 
-  // ✅ Separate booked and available seats
+  
   const bookedSeats = allSeats.filter(seat => seat.isBooked).map(seat => seat.seatNumber);
   const availableSeats = allSeats.filter(seat => !seat.isBooked).map(seat => seat.seatNumber);
 

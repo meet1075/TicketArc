@@ -15,7 +15,7 @@ const createPayment = asyncHandler(async (req, res) => {
     if (!seatAvailabilityId) throw new ApiErrors(400, "Missing seatAvailabilityId");
     if (!amount || amount <= 0) throw new ApiErrors(400, "Invalid amount");
 
-    // ✅ Fetch Seat Availability & Populate Seat Type
+    
     const seatAvailability = await SeatAvailability.findById(seatAvailabilityId)
       .populate({
         path: "seatId",
@@ -35,16 +35,16 @@ const createPayment = asyncHandler(async (req, res) => {
       throw new ApiErrors(400, "Seat is not reserved by you or has expired");
     }
 
-    // ✅ Ensure transactionId is provided (generate if missing)
+    
     const paymentTransactionId = transactionId || uuidv4(); // Generate a unique ID if not provided
 
-    // ✅ Create Payment
+    
     const payment = await Payment.create({
       userId,
       amount,
       paymentMethod,
       transactionId: paymentTransactionId,
-      paymentStatus: "Completed", // Assuming instant payment success
+      paymentStatus: "Completed", 
       seatAvailabilityId: seatAvailability._id,
     });
 

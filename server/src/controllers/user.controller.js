@@ -107,22 +107,12 @@ const login = asyncHandler(async (req, res, next) => {
     .json({ 
         success: true,
         user: loggedInUser,
-        accessToken, // Send token in response (for debugging)
+        accessToken, 
         refreshToken
     });
 
 
-    // return res
-    // .status(200)
-    // .cookie("accessToken",accessToken,options)
-    // .cookie("refreshToken",refreshToken,options)
-    // .json(new ApiResponse(200,
-    //    {
-    //        user:loggedInUser,accessToken,refreshToken
-    //    },
-    //    "user logged in successfully"
-    //    ))
-    // next(); 
+     
 });
 
 const logout= asyncHandler(async(req,res)=>{

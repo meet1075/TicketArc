@@ -66,13 +66,13 @@ const addShowtime = asyncHandler(async (req, res) => {
     throw new ApiErrors(500, "Failed to add showtime");
   }
 
-  // Get all seats for the screen
+  
   const seats = await Seat.find({ screenId });
   if (!seats.length) {
     throw new ApiErrors(404, "No seats found for this screen");
   }
 
-  // Create seat availability for each seat
+  
   const seatAvailability = seats.map(seat => ({
     seatId: seat._id,
     seatNumber: seat.seatNumber,
@@ -80,7 +80,7 @@ const addShowtime = asyncHandler(async (req, res) => {
     isAvailable: true,
   }));
 
-  // Insert all seat availability records
+  
   await SeatAvailability.insertMany(seatAvailability);
 
   return res.status(201).json(new ApiResponse(201, { 
@@ -142,10 +142,10 @@ const deleteShowtime = asyncHandler(async (req, res) => {
     throw new ApiErrors(403, "Only admins can delete showtime");
   }
 
-  // Delete all seat availability records for this showtime
+ 
   const deletedSeatAvailability = await SeatAvailability.deleteMany({ showtimeId });
   
-  // Delete the showtime
+  
   const deletedShowtime = await ShowTime.findByIdAndDelete(showtimeId);
   if (!deletedShowtime) {
     throw new ApiErrors(500, "Failed to delete showtime");

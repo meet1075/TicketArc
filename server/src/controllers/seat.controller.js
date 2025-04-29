@@ -139,7 +139,7 @@ const getSeatLayoutForShowtime = asyncHandler(async (req, res) => {
       throw new ApiErrors(400, "Invalid screenId or showtimeId");
     }
   
-    // First, get the screen details to know total seats
+    // get the screen details to know total seats
     const screen = await Screen.findById(screenId);
     if (!screen) {
       throw new ApiErrors(404, "Screen not found");
@@ -164,7 +164,7 @@ const getSeatLayoutForShowtime = asyncHandler(async (req, res) => {
 
     const showtimePrices = showtime.price || { Regular: 0, Premium: 0 };
 
-    // Get the number of rows and columns from the screen model
+    // Get number of rows and columns from the screen model
     const totalRows = screen.numberOfRows || Math.ceil(Math.sqrt(screen.totalSeats));
     const seatsPerRow = screen.numberOfColumns || Math.ceil(screen.totalSeats / totalRows);
     
@@ -191,7 +191,7 @@ const getSeatLayoutForShowtime = asyncHandler(async (req, res) => {
         const availability = availabilityMap.get(seatNumber);
         const seatType = existingSeat?.seatType || "regular";
         
-        // Determine seat status
+        //  seat status
         let seatStatus = "available";
         let statusMessage = "Available";
         
@@ -324,7 +324,7 @@ const confirmSeatBooking = asyncHandler(async (req, res) => {
     }, "Showtime is completed"));
   }
 
-  // Check seat availability with detailed messages
+  // seat availability with detailed messages
   if (!seat.isAvailable) {
     return res.status(200).json(new ApiResponse(200, { 
       isBooked: true,
